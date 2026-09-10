@@ -1,0 +1,52 @@
+/* Argus shared theme — animated dark terminal.
+   Tokens are JavaFX looked-up colours, not CSS custom properties: JavaFX has no var().
+   Declared on .root so every node in the scene can resolve them by name. */
+
+.root {
+    /* surfaces */
+    -argus-bg-base:        #0d0f0d;
+    -argus-bg-panel:       #111511;
+    -argus-bg-panel-alt:   #0a0d0a;
+
+    /* borders */
+    -argus-border:         #1f2b1f;
+    -argus-border-strong:  #2a5a35;
+
+    /* accent */
+    -argus-accent:         #3ddc5f;
+    -argus-accent-hover:   #4de870;
+
+    /* status: danger */
+    -argus-danger-bg:      #1a0e0e;
+    -argus-danger-border:  #3a1414;
+    -argus-danger-text:    #e8726e;
+
+    /* status: warning */
+    -argus-warning-bg:     #1a1608;
+    -argus-warning-border: #3a2f0e;
+    -argus-warning-text:   #d4a53d;
+
+    /* status: success */
+    -argus-success-bg:     #0e1a10;
+    -argus-success-border: #14361c;
+
+    /* text */
+    -argus-text-primary:   #c9d6c9;
+    -argus-text-secondary: #8fa88f;
+    -argus-text-muted:     #5a6b5a;
+
+    /* app chrome */
+    -fx-background-color: -argus-bg-base;
+    -fx-font-family: "Consolas", "Courier New", "Monospaced";
+    -fx-font-size: 13px;
+}
+
+.app-root {
+    -fx-background-color: -argus-bg-base;
+    -fx-padding: 24;
+}
+
+.boot-line {
+    -fx-text-fill: -argus-accent;
+    -fx-font-size: 15px;
+}
