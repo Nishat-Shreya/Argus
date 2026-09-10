@@ -1,0 +1,30 @@
+# Build
+target/
+*.class
+
+# SQLite / local data
+*.db
+*.db-journal
+*.sqlite
+
+# Encrypted key vault & operator credentials — never commit
+vault/
+*.vault
+*.keystore
+credentials.properties
+
+# IDE
+.idea/
+*.iml
+.vscode/
+.settings/
+.classpath
+.project
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+logs/
