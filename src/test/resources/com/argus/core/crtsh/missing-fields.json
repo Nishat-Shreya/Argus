@@ -1,0 +1,47 @@
+[
+  {
+    "issuer_ca_id": 100,
+    "issuer_name": "C=US, O=Let's Encrypt, CN=R3",
+    "common_name": "cn-only.example.com",
+    "id": 2000000001,
+    "entry_timestamp": "2026-02-01T00:00:01",
+    "not_before": "2026-02-01T00:00:00",
+    "not_after": "2026-05-01T00:00:00",
+    "serial_number": "eeff001122"
+  },
+  {
+    "issuer_ca_id": 100,
+    "issuer_name": "C=US, O=Let's Encrypt, CN=R3",
+    "common_name": "null-name-value.example.com",
+    "name_value": null,
+    "id": 2000000002,
+    "entry_timestamp": "2026-02-02T00:00:01",
+    "not_before": "2026-02-02T00:00:00",
+    "not_after": "2026-05-02T00:00:00",
+    "serial_number": "eeff001123"
+  },
+  {
+    "issuer_ca_id": 100,
+    "issuer_name": "C=US, O=Let's Encrypt, CN=R3",
+    "common_name": "numeric-name-value.example.com",
+    "name_value": 12345,
+    "id": 2000000003,
+    "entry_timestamp": "2026-02-03T00:00:01",
+    "not_before": "2026-02-03T00:00:00",
+    "not_after": "2026-05-03T00:00:00",
+    "serial_number": "eeff001124"
+  },
+  {
+    "issuer_ca_id": 100,
+    "issuer_name": "C=US, O=Let's Encrypt, CN=R3",
+    "common_name": "extra-field.example.com",
+    "name_value": "extra-field.example.com",
+    "unknown_future_field": "surprise",
+    "id": 2000000004,
+    "entry_timestamp": "2026-02-04T00:00:01",
+    "not_before": "2026-02-04T00:00:00",
+    "not_after": "2026-05-04T00:00:00",
+    "serial_number": "eeff001125"
+  },
+  "not an object"
+]
