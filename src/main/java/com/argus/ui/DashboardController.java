@@ -1,0 +1,232 @@
+package com.argus.ui;
+
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import javafx.animation.FadeTransition;
+import javafx.application.Platform;
+import javafx.beans.property.ReadOnlyStringWrapper;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
+import javafx.fxml.FXML;
+import javafx.scene.control.Button;
+import javafx.scene.control.Label;
+import javafx.scene.control.ListView;
+import javafx.scene.control.ProgressBar;
+import javafx.scene.control.TableColumn;
+import javafx.scene.control.TableView;
+import javafx.scene.control.TextField;
+import javafx.scene.layout.HBox;
+import javafx.scene.shape.Circle;
+
+/**
+ * Dashboard screen. Field wiring, validation dispatch, and marshalling coordinator events onto
+ * the FX thread. No scan logic, no threading policy, no domain rules — those are
+ * {@link DashboardValidation} and {@link ScanCoordinator} (the {@code LoginController}
+ * precedent, P1-05 §7.14).
+ */
+public final class DashboardController {
+
+    private static final int LOG_CAPACITY = 2000;
+
+    @FXML
+    private HBox toolbar;
+    @FXML
+    private TextField targetField;
+    @FXML
+    private Button scanButton;
+    @FXML
+    private Button pauseButton;
+    @FXML
+    private Button cancelButton;
+    @FXML
+    private Circle liveDot;
+    @FXML
+    private Label messageLabel;
+    @FXML
+    private TableView<FindingRow> findingsTable;
+    @FXML
+    private ListView<String> workerList;
+    @FXML
+    private ListView<String> logConsole;
+    @FXML
+    private ProgressBar progressBar;
+    @FXML
+    private Label statusLine;
+
+    private final ObservableList<String> workerItems = FXCollections.observableArrayList();
+    private final ObservableList<String> logItems = FXCollections.observableArrayList();
+    private final Map<String, Integer> workerRowIndex = new LinkedHashMap<>();
+
+    private ScanCoordinator coordinator;
+    private FadeTransition liveDotPulse;
+
+    @FXML
+    @SuppressWarnings("unchecked")
+    private void initialize() {
+        TableColumn<FindingRow, String> typeColumn =
+                (TableColumn<FindingRow, String>) findingsTable.getColumns().get(0);
+        TableColumn<FindingRow, String> subjectColumn =
+                (TableColumn<FindingRow, String>) findingsTable.getColumns().get(1);
+        TableColumn<FindingRow, String> portColumn =
+                (TableColumn<FindingRow, String>) findingsTable.getColumns().get(2);
+        TableColumn<FindingRow, String> stateColumn =
+                (TableColumn<FindingRow, String>) findingsTable.getColumns().get(3);
+        typeColumn.setCellValueFactory(cd -> new ReadOnlyStringWrapper(cd.getValue().type()));
+        subjectColumn.setCellValueFactory(cd -> new ReadOnlyStringWrapper(cd.getValue().subject()));
+        portColumn.setCellValueFactory(cd -> new ReadOnlyStringWrapper(cd.getValue().port()));
+        stateColumn.setCellValueFactory(cd -> new ReadOnlyStringWrapper(cd.getValue().state()));
+
+        workerList.setItems(workerItems);
+        logConsole.setItems(logItems);
+
+        coordinator = new ScanCoordinator(new ScanEventListener() {
+            @Override
+            public void onScanStarted(ScanPlan plan, List<String> jobNames) {
+                Platform.runLater(() -> appendLog("scan started · target " + plan.target()
+                        + " · " + jobNames.size() + " workers"));
+            }
+
+            @Override
+            public void onLog(String line) {
+                Platform.runLater(() -> appendLog(line));
+            }
+
+            @Override
+            public void onWorkerStatus(WorkerStatus status) {
+                Platform.runLater(() -> updateWorkerRow(status));
+            }
+
+            @Override
+            public void onFindings(List<FindingRow> batch) {
+                Platform.runLater(() -> findingsTable.getItems().addAll(batch));
+            }
+
+            @Override
+            public void onProgress(ScanProgress progress) {
+                Platform.runLater(() -> progressBar.setProgress(progress.fraction()));
+            }
+
+            @Override
+            public void onScanFinished(ScanOutcome outcome) {
+                Platform.runLater(() -> onScanFinishedOnFxThread(outcome));
+            }
+        });
+    }
+
+    @FXML
+    private void onScan() {
+        DashboardValidation.Result result = DashboardValidation.check(targetField.getText());
+        if (!result.valid()) {
+            showMessage(result.message());
+            AnimationUtils.shake(toolbar);
+            return;
+        }
+
+        clearMessage();
+        findingsTable.getItems().clear();
+        logItems.clear();
+        workerItems.clear();
+        workerRowIndex.clear();
+        progressBar.setProgress(0.0);
+        statusLine.setText("running");
+        appendLog("cleared");
+
+        scanButton.setDisable(true);
+        pauseButton.setDisable(false);
+        pauseButton.setText("pause");
+        cancelButton.setDisable(false);
+        targetField.setEditable(false);
+
+        startLiveDot();
+        coordinator.start(ScanPlan.of(result.target()));
+    }
+
+    @FXML
+    private void onPauseResume() {
+        if (coordinator.isPaused()) {
+            coordinator.resume();
+            pauseButton.setText("pause");
+            appendLog("scan resumed");
+        } else {
+            coordinator.pause();
+            pauseButton.setText("resume");
+            appendLog("scan paused · probes already in flight will finish; "
+                    + "new results are held until resume");
+        }
+    }
+
+    @FXML
+    private void onCancel() {
+        appendLog("cancel requested · in-flight probes stop within the connect timeout");
+        coordinator.cancel();
+    }
+
+    /** Called by {@code App.stop()}. Closes the coordinator. Idempotent. */
+    public void shutdown() {
+        stopLiveDot();
+        coordinator.close();
+    }
+
+    private void onScanFinishedOnFxThread(ScanOutcome outcome) {
+        stopLiveDot();
+        scanButton.setDisable(false);
+        pauseButton.setDisable(true);
+        pauseButton.setText("pause");
+        cancelButton.setDisable(true);
+        targetField.setEditable(true);
+
+        String resultWord = switch (outcome.result()) {
+            case COMPLETED -> "completed";
+            case COMPLETED_WITH_ERRORS -> "completed with errors";
+            case CANCELLED -> "cancelled";
+        };
+        appendLog("scan finished · " + outcome.findingsDelivered() + " findings · " + resultWord);
+        statusLine.setText(resultWord);
+    }
+
+    private void updateWorkerRow(WorkerStatus status) {
+        String line = (status.threadName() == null ? "(not yet started)" : status.threadName())
+                + " · " + status.jobName() + " · " + status.state().name().toLowerCase()
+                + " · " + status.findingsPublished() + " findings";
+        Integer index = workerRowIndex.get(status.jobName());
+        if (index == null) {
+            workerRowIndex.put(status.jobName(), workerItems.size());
+            workerItems.add(line);
+        } else {
+            workerItems.set(index, line);
+        }
+    }
+
+    private void appendLog(String line) {
+        logItems.add(line);
+        while (logItems.size() > LOG_CAPACITY) {
+            logItems.remove(0);
+        }
+        logConsole.scrollTo(logItems.size() - 1);
+    }
+
+    private void startLiveDot() {
+        liveDotPulse = AnimationUtils.pulseDot(liveDot);
+    }
+
+    private void stopLiveDot() {
+        if (liveDotPulse != null) {
+            liveDotPulse.stop();
+            liveDotPulse = null;
+        }
+        liveDot.setOpacity(1);
+    }
+
+    private void showMessage(String text) {
+        messageLabel.setText(text);
+        messageLabel.setVisible(true);
+        messageLabel.setManaged(true);
+    }
+
+    private void clearMessage() {
+        messageLabel.setText(null);
+        messageLabel.setVisible(false);
+        messageLabel.setManaged(false);
+    }
+}

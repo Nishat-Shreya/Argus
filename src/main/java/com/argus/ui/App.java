@@ -2,18 +2,17 @@ package com.argus.ui;
 
 import com.argus.core.Vault;
 import com.argus.core.VaultStore;
+import java.io.IOException;
 import java.lang.System.Logger.Level;
 import javafx.application.Application;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
-import javafx.scene.control.Label;
-import javafx.scene.layout.StackPane;
 import javafx.stage.Stage;
 
 /**
  * The JavaFX lifecycle for Argus. {@link #start} loads and shows the login screen (plan
- * §7.15); on a successful unlock the scene root swaps to P0-02's placeholder. {@code start}
+ * §7.15); on a successful unlock the scene root swaps to the dashboard (P1-06). {@code start}
  * runs on the FX Application Thread and stays synchronous and trivial (invariant 3): the
  * blocking vault unlock happens inside {@link LoginController}'s background {@code Task}, not
  * here.
@@ -27,6 +26,9 @@ public final class App extends Application {
     /** FX-thread-confined: assigned once in the login callback, read only by {@link #stop()}. */
     private Vault vault;
 
+    /** FX-thread-confined: assigned once on unlock, closed by {@link #stop()} (invariant 6). */
+    private DashboardController dashboardController;
+
     @Override
     public void start(Stage stage) throws Exception {
         FXMLLoader loader = new FXMLLoader(getClass().getResource("login-view.fxml"));
@@ -39,7 +41,15 @@ public final class App extends Application {
 
         controller.setOnUnlocked(unlockedVault -> {
             this.vault = unlockedVault;
-            scene.setRoot(buildPlaceholder());
+            try {
+                FXMLLoader dashboardLoader =
+                        new FXMLLoader(getClass().getResource("dashboard-view.fxml"));
+                Parent dashboardRoot = dashboardLoader.load();
+                this.dashboardController = dashboardLoader.getController();
+                scene.setRoot(dashboardRoot);
+            } catch (IOException e) {
+                throw new IllegalStateException("failed to load dashboard-view.fxml", e);
+            }
         });
 
         stage.setTitle(WINDOW_TITLE);
@@ -49,25 +59,18 @@ public final class App extends Application {
         stage.show();
     }
 
-    /** P0-02's original placeholder, unchanged apart from living in its own method now. */
-    private Parent buildPlaceholder() {
-        Label bootLine = new Label("argus — no target loaded");
-        bootLine.getStyleClass().add("boot-line");
-
-        StackPane root = new StackPane(bootLine);
-        root.getStyleClass().add("app-root");
-
-        AnimationUtils.fadeInUp(bootLine);
-        return root;
-    }
-
     /**
-     * JavaFX shutdown hook. Closes the vault, if one was ever unlocked — the zeroization-at
-     * -app-close tie-in (plan §4.6). This is P0-02's designated home for invariant 6's executor
-     * shutdown once P1-06 owns a scan pool; the vault has no pool and needs none.
+     * JavaFX shutdown hook. Shuts the dashboard's scan down first (invariant 6 — P0-02's
+     * reservation of this method for the scan {@code ExecutorService}), then closes the vault,
+     * if one was ever unlocked — the zeroization-at-app-close tie-in (plan §4.6). Scan first,
+     * vault second: the vault is not used by the scan, but "stop the work, then release the
+     * credential" is the order that stays correct if that ever changes.
      */
     @Override
     public void stop() {
+        if (dashboardController != null) {
+            dashboardController.shutdown();
+        }
         if (vault != null) {
             try {
                 vault.close();

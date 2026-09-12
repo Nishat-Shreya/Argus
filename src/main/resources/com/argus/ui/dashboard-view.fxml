@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ListView?>
+<?import javafx.scene.control.ProgressBar?>
+<?import javafx.scene.control.SplitPane?>
+<?import javafx.scene.control.TableColumn?>
+<?import javafx.scene.control.TableView?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.shape.Circle?>
+
+<BorderPane xmlns="http://javafx.com/javafx/21"
+            xmlns:fx="http://javafx.com/fxml/1"
+            fx:controller="com.argus.ui.DashboardController"
+            styleClass="dashboard-root">
+    <top>
+        <HBox fx:id="toolbar" styleClass="toolbar" alignment="CENTER_LEFT" spacing="10">
+            <Label text="argus" styleClass="card-title"/>
+            <TextField fx:id="targetField" promptText="target domain" styleClass="field"/>
+            <Button fx:id="scanButton" text="scan" styleClass="primary-button"
+                    onAction="#onScan" defaultButton="true"/>
+            <Button fx:id="pauseButton" text="pause" styleClass="secondary-button"
+                    onAction="#onPauseResume" disable="true"/>
+            <Button fx:id="cancelButton" text="cancel" styleClass="danger-button"
+                    onAction="#onCancel" disable="true"/>
+            <Circle fx:id="liveDot" radius="5" styleClass="live-dot"/>
+            <Label fx:id="messageLabel" styleClass="form-error" visible="false" managed="false"
+                   wrapText="true"/>
+        </HBox>
+    </top>
+    <center>
+        <SplitPane dividerPositions="0.6">
+            <TableView fx:id="findingsTable" styleClass="findings-table">
+                <columns>
+                    <TableColumn text="type" prefWidth="90"/>
+                    <TableColumn text="subject" prefWidth="220"/>
+                    <TableColumn text="port" prefWidth="70"/>
+                    <TableColumn text="state" prefWidth="90"/>
+                </columns>
+                <placeholder>
+                    <Label text="no findings yet — enter a target and press scan"/>
+                </placeholder>
+            </TableView>
+            <VBox spacing="0">
+                <ListView fx:id="workerList" styleClass="worker-list" VBox.vgrow="ALWAYS"/>
+                <ListView fx:id="logConsole" styleClass="log-console" VBox.vgrow="ALWAYS"/>
+            </VBox>
+        </SplitPane>
+    </center>
+    <bottom>
+        <HBox alignment="CENTER_LEFT" spacing="10">
+            <padding>
+                <Insets top="8" right="16" bottom="8" left="16"/>
+            </padding>
+            <ProgressBar fx:id="progressBar" styleClass="scan-progress" progress="0.0"/>
+            <Label fx:id="statusLine" styleClass="status-line" text="idle"/>
+        </HBox>
+    </bottom>
+</BorderPane>

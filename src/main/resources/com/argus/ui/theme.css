@@ -122,3 +122,113 @@
     -fx-text-fill: -argus-text-muted;
     -fx-font-size: 12px;
 }
+
+/* P1-06: dashboard screen (plan section 7.9). Append-only -- the .root token block above is
+   pinned by ThemeResourceTest and must not be reordered or edited. */
+
+.dashboard-root {
+    -fx-background-color: -argus-bg-base;
+}
+
+.toolbar {
+    -fx-background-color: -argus-bg-panel;
+    -fx-border-color: -argus-border;
+    -fx-border-width: 0 0 1 0;
+    -fx-padding: 12 16;
+    -fx-spacing: 10;
+    -fx-alignment: center-left;
+}
+
+.secondary-button {
+    -fx-background-color: -argus-bg-panel-alt;
+    -fx-text-fill: -argus-text-primary;
+    -fx-border-color: -argus-border;
+    -fx-border-width: 1;
+    -fx-background-radius: 4;
+    -fx-border-radius: 4;
+    -fx-padding: 8 16;
+}
+
+.secondary-button:hover {
+    -fx-border-color: -argus-border-strong;
+}
+
+.danger-button {
+    -fx-background-color: -argus-danger-bg;
+    -fx-text-fill: -argus-danger-text;
+    -fx-border-color: -argus-danger-border;
+    -fx-border-width: 1;
+    -fx-background-radius: 4;
+    -fx-border-radius: 4;
+    -fx-padding: 8 16;
+}
+
+.danger-button:hover {
+    -fx-border-color: -argus-danger-text;
+}
+
+.status-line {
+    -fx-text-fill: -argus-text-secondary;
+    -fx-font-size: 12px;
+}
+
+.live-dot {
+    -fx-fill: -argus-accent;
+}
+
+.scan-progress {
+    -fx-accent: -argus-accent;
+}
+
+.findings-table,
+.worker-list,
+.log-console {
+    -fx-background-color: -argus-bg-panel;
+    -fx-border-color: -argus-border;
+    -fx-border-width: 1;
+}
+
+.findings-table .column-header-background {
+    -fx-background-color: -argus-bg-panel-alt;
+}
+
+.findings-table .column-header {
+    -fx-background-color: -argus-bg-panel-alt;
+    -fx-border-color: -argus-border;
+}
+
+.findings-table .column-header .label {
+    -fx-text-fill: -argus-text-secondary;
+}
+
+.findings-table .table-row-cell {
+    -fx-background-color: -argus-bg-panel;
+    -fx-table-cell-border-color: -argus-border;
+}
+
+.findings-table .table-row-cell:odd {
+    -fx-background-color: -argus-bg-panel-alt;
+}
+
+.findings-table .table-row-cell:selected {
+    -fx-background-color: -argus-border-strong;
+}
+
+.findings-table .table-cell {
+    -fx-text-fill: -argus-text-primary;
+}
+
+.findings-table .placeholder .label {
+    -fx-text-fill: -argus-text-muted;
+}
+
+.log-console .list-cell {
+    -fx-background-color: -argus-bg-panel;
+    -fx-text-fill: -argus-text-primary;
+    -fx-font-family: "Consolas", "Courier New", "Monospaced";
+}
+
+.worker-list .list-cell {
+    -fx-background-color: -argus-bg-panel;
+    -fx-text-fill: -argus-text-primary;
+}
