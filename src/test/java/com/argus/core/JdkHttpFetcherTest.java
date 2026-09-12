@@ -58,7 +58,7 @@ class JdkHttpFetcherTest {
             }
         });
 
-        HttpFetchResult result = new JdkHttpFetcher().fetch(uri);
+        HttpFetchResult result = new JdkHttpFetcher().fetch(HttpRequestSpec.get(uri));
 
         assertEquals(200, result.statusCode());
         assertEquals(jsonBody, result.body());
@@ -76,7 +76,7 @@ class JdkHttpFetcherTest {
             }
         });
 
-        HttpFetchResult result = new JdkHttpFetcher().fetch(uri);
+        HttpFetchResult result = new JdkHttpFetcher().fetch(HttpRequestSpec.get(uri));
 
         assertEquals(502, result.statusCode());
         assertFalse(result.isSuccess());
@@ -94,7 +94,7 @@ class JdkHttpFetcherTest {
             }
         });
 
-        HttpFetchResult result = new JdkHttpFetcher().fetch(uri);
+        HttpFetchResult result = new JdkHttpFetcher().fetch(HttpRequestSpec.get(uri));
 
         assertEquals(body, result.body());
     }
@@ -116,7 +116,8 @@ class JdkHttpFetcherTest {
         });
 
         JdkHttpFetcher fetcher = new JdkHttpFetcher();
-        assertThrows(IOException.class, () -> fetcher.fetch(uri));
+        HttpRequestSpec spec = HttpRequestSpec.get(uri);
+        assertThrows(IOException.class, () -> fetcher.fetch(spec));
     }
 
     @Test
@@ -131,7 +132,7 @@ class JdkHttpFetcherTest {
             }
         });
 
-        new JdkHttpFetcher().fetch(uri);
+        new JdkHttpFetcher().fetch(HttpRequestSpec.get(uri));
 
         Map<String, List<String>> headers = capturedHeaders.get();
         assertNotNull(headers);
@@ -139,5 +140,91 @@ class JdkHttpFetcherTest {
         assertTrue(headers.get("Accept").contains("application/json"));
         assertTrue(headers.containsKey("User-Agent"));
         assertTrue(headers.get("User-Agent").get(0).startsWith("Argus/"));
+    }
+
+    @Test
+    void sendsSpecHeadersToTheServer() throws Exception {
+        AtomicReference<Map<String, List<String>>> capturedHeaders = new AtomicReference<>();
+        URI uri = startServer(exchange -> {
+            capturedHeaders.set(exchange.getRequestHeaders());
+            byte[] bytes = "[]".getBytes(StandardCharsets.UTF_8);
+            exchange.sendResponseHeaders(200, bytes.length);
+            try (OutputStream os = exchange.getResponseBody()) {
+                os.write(bytes);
+            }
+        });
+
+        new JdkHttpFetcher().fetch(HttpRequestSpec.get(uri, "x-apikey", "test-key"));
+
+        Map<String, List<String>> headers = capturedHeaders.get();
+        assertNotNull(headers);
+        assertTrue(headers.containsKey("x-apikey"));
+        assertEquals("test-key", headers.get("x-apikey").get(0));
+    }
+
+    @Test
+    void defaultAcceptAndUserAgentSurviveWhenSpecAddsOtherHeaders() throws Exception {
+        AtomicReference<Map<String, List<String>>> capturedHeaders = new AtomicReference<>();
+        URI uri = startServer(exchange -> {
+            capturedHeaders.set(exchange.getRequestHeaders());
+            byte[] bytes = "[]".getBytes(StandardCharsets.UTF_8);
+            exchange.sendResponseHeaders(200, bytes.length);
+            try (OutputStream os = exchange.getResponseBody()) {
+                os.write(bytes);
+            }
+        });
+
+        new JdkHttpFetcher().fetch(HttpRequestSpec.get(uri, "x-apikey", "test-key"));
+
+        Map<String, List<String>> headers = capturedHeaders.get();
+        assertNotNull(headers);
+        assertTrue(headers.containsKey("Accept"));
+        assertTrue(headers.get("Accept").contains("application/json"));
+        assertTrue(headers.containsKey("User-Agent"));
+        assertTrue(headers.get("User-Agent").get(0).startsWith("Argus/"));
+    }
+
+    @Test
+    void specHeaderOverridesTheDefaultOfTheSameName() throws Exception {
+        AtomicReference<Map<String, List<String>>> capturedHeaders = new AtomicReference<>();
+        URI uri = startServer(exchange -> {
+            capturedHeaders.set(exchange.getRequestHeaders());
+            byte[] bytes = "[]".getBytes(StandardCharsets.UTF_8);
+            exchange.sendResponseHeaders(200, bytes.length);
+            try (OutputStream os = exchange.getResponseBody()) {
+                os.write(bytes);
+            }
+        });
+
+        new JdkHttpFetcher().fetch(
+                HttpRequestSpec.get(uri, "Accept", "application/vnd.censys.v3+json"));
+
+        Map<String, List<String>> headers = capturedHeaders.get();
+        assertNotNull(headers);
+        assertEquals(1, headers.get("Accept").size());
+        assertEquals("application/vnd.censys.v3+json", headers.get("Accept").get(0));
+    }
+
+    @Test
+    void oversizeMessageIsNotCrtShSpecific() throws Exception {
+        URI uri = startServer(exchange -> {
+            long total = (long) JdkHttpFetcher.MAX_BODY_BYTES + 1;
+            exchange.sendResponseHeaders(200, total);
+            try (OutputStream os = exchange.getResponseBody()) {
+                byte[] chunk = new byte[8192];
+                long written = 0;
+                while (written < total) {
+                    int toWrite = (int) Math.min(chunk.length, total - written);
+                    os.write(chunk, 0, toWrite);
+                    written += toWrite;
+                }
+            }
+        });
+
+        JdkHttpFetcher fetcher = new JdkHttpFetcher();
+        HttpRequestSpec spec = HttpRequestSpec.get(uri);
+        IOException e = assertThrows(IOException.class, () -> fetcher.fetch(spec));
+        assertFalse(e.getMessage().contains("crt.sh"));
+        assertFalse(e.getMessage().contains(uri.toString()));
     }
 }

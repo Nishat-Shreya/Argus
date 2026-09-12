@@ -4,17 +4,18 @@ import java.io.IOException;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Test double for {@link HttpFetcher}: scripted to return a given {@link HttpFetchResult}, or
- * throw a given {@link IOException} / {@link InterruptedException}; records every {@link URI}
- * it was asked for. No sockets, no off-box network.
+ * throw a given {@link IOException} / {@link InterruptedException}; records every
+ * {@link HttpRequestSpec} it was asked for. No sockets, no off-box network.
  */
 final class FakeHttpFetcher implements HttpFetcher {
 
     private HttpFetchResult scriptedResult;
     private Exception scriptedFailure;
-    private final List<URI> requestedUris = new ArrayList<>();
+    private final List<HttpRequestSpec> requestedSpecs = new ArrayList<>();
 
     void willReturn(HttpFetchResult result) {
         this.scriptedResult = result;
@@ -26,17 +27,34 @@ final class FakeHttpFetcher implements HttpFetcher {
         this.scriptedResult = null;
     }
 
+    /** The {@link URI} of every spec this fake was asked to fetch, in call order. */
     List<URI> requestedUris() {
-        return List.copyOf(requestedUris);
+        List<URI> uris = new ArrayList<>();
+        for (HttpRequestSpec spec : requestedSpecs) {
+            uris.add(spec.uri());
+        }
+        return List.copyOf(uris);
+    }
+
+    List<HttpRequestSpec> requestedSpecs() {
+        return List.copyOf(requestedSpecs);
+    }
+
+    /** The headers of the most recent spec this fake was asked to fetch. */
+    Map<String, String> lastHeaders() {
+        if (requestedSpecs.isEmpty()) {
+            throw new IllegalStateException("FakeHttpFetcher has not been asked to fetch yet");
+        }
+        return requestedSpecs.get(requestedSpecs.size() - 1).headers();
     }
 
     int callCount() {
-        return requestedUris.size();
+        return requestedSpecs.size();
     }
 
     @Override
-    public HttpFetchResult fetch(URI uri) throws IOException, InterruptedException {
-        requestedUris.add(uri);
+    public HttpFetchResult fetch(HttpRequestSpec spec) throws IOException, InterruptedException {
+        requestedSpecs.add(spec);
         if (scriptedFailure != null) {
             if (scriptedFailure instanceof IOException io) {
                 throw io;

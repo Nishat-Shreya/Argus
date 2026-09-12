@@ -12,7 +12,12 @@ final class Fixtures {
 
     /** Reads {@code /com/argus/core/crtsh/<name>} as UTF-8; fails loudly if absent. */
     static String read(String name) {
-        String path = "/com/argus/core/crtsh/" + name;
+        return read("crtsh", name);
+    }
+
+    /** Reads {@code /com/argus/core/<source>/<name>} as UTF-8; fails loudly if absent. */
+    static String read(String source, String name) {
+        String path = "/com/argus/core/" + source + "/" + name;
         try (InputStream in = Fixtures.class.getResourceAsStream(path)) {
             if (in == null) {
                 throw new IllegalStateException("Missing test fixture on classpath: " + path);

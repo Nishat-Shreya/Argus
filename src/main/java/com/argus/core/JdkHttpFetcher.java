@@ -3,13 +3,13 @@ package com.argus.core;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.net.http.HttpResponse.BodyHandlers;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
+import java.util.Map;
 
 /** The real fetcher: java.net.http.HttpClient, bounded body, JSON Accept header. */
 final class JdkHttpFetcher implements HttpFetcher {
@@ -31,13 +31,18 @@ final class JdkHttpFetcher implements HttpFetcher {
     JdkHttpFetcher() {}
 
     @Override
-    public HttpFetchResult fetch(URI uri) throws IOException, InterruptedException {
-        HttpRequest request = HttpRequest.newBuilder(uri)
+    public HttpFetchResult fetch(HttpRequestSpec spec) throws IOException, InterruptedException {
+        HttpRequest.Builder builder = HttpRequest.newBuilder(spec.uri())
                 .timeout(REQUEST_TIMEOUT)
                 .header("Accept", "application/json")
                 .header("User-Agent", USER_AGENT)
-                .GET()
-                .build();
+                .GET();
+        // Defaults first, then each spec header on top: a spec header of the same name
+        // replaces the default (plan §3.2), every other default survives.
+        for (Map.Entry<String, String> header : spec.headers().entrySet()) {
+            builder.setHeader(header.getKey(), header.getValue());
+        }
+        HttpRequest request = builder.build();
 
         HttpResponse<InputStream> response =
                 CLIENT.send(request, BodyHandlers.ofInputStream());
@@ -55,7 +60,7 @@ final class JdkHttpFetcher implements HttpFetcher {
                 buffer.write(chunk, 0, read);
                 if (buffer.size() > MAX_BODY_BYTES) {
                     throw new IOException(
-                            "crt.sh response body exceeded " + MAX_BODY_BYTES + " bytes");
+                            "response body exceeded " + MAX_BODY_BYTES + " bytes");
                 }
             }
         }

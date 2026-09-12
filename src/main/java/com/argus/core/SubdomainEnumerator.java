@@ -43,7 +43,7 @@ public final class SubdomainEnumerator {
 
         HttpFetchResult result;
         try {
-            result = fetcher.fetch(uri);
+            result = fetcher.fetch(HttpRequestSpec.get(uri));
         } catch (IOException e) {
             throw new SubdomainEnumerationException(
                     "crt.sh request failed for " + normalizedDomain, e);
