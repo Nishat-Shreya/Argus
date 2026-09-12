@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.PasswordField?>
+<?import javafx.scene.control.TableColumn?>
+<?import javafx.scene.control.TableView?>
+<?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.VBox?>
+
+<BorderPane xmlns="http://javafx.com/javafx/21"
+            xmlns:fx="http://javafx.com/fxml/1"
+            fx:controller="com.argus.ui.KeyVaultController"
+            styleClass="key-vault-root">
+    <top>
+        <HBox styleClass="toolbar" alignment="CENTER_LEFT" spacing="10">
+            <Label text="api keys" styleClass="card-title"/>
+            <Label fx:id="vaultLabel" styleClass="card-subtitle"/>
+            <Button fx:id="backButton" text="back to dashboard" styleClass="secondary-button"
+                    onAction="#onBack"/>
+        </HBox>
+    </top>
+    <center>
+        <HBox spacing="16">
+            <TableView fx:id="sourcesTable" styleClass="key-table">
+                <columns>
+                    <TableColumn text="source" prefWidth="140"/>
+                    <TableColumn text="vault entry" prefWidth="180"/>
+                    <TableColumn text="status" prefWidth="120"/>
+                </columns>
+            </TableView>
+            <VBox fx:id="card" styleClass="key-editor">
+                <Label fx:id="editorLabel" styleClass="card-subtitle"/>
+                <PasswordField fx:id="keyField" promptText="paste the API key" styleClass="field"/>
+                <HBox spacing="10">
+                    <Button fx:id="saveButton" text="save" styleClass="primary-button"
+                            onAction="#onSaveKey"/>
+                    <Button fx:id="removeButton" text="remove" styleClass="danger-button"
+                            onAction="#onRemoveKey" disable="true"/>
+                </HBox>
+                <Label fx:id="messageLabel" styleClass="form-hint" visible="false" managed="false"
+                       wrapText="true"/>
+            </VBox>
+        </HBox>
+    </center>
+</BorderPane>

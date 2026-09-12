@@ -40,6 +40,8 @@ public final class DashboardController {
     @FXML
     private Button cancelButton;
     @FXML
+    private Button keysButton;
+    @FXML
     private Circle liveDot;
     @FXML
     private Label messageLabel;
@@ -60,6 +62,9 @@ public final class DashboardController {
 
     private ScanCoordinator coordinator;
     private FadeTransition liveDotPulse;
+
+    /** FX-thread-confined; opens the key-vault panel. Never a Vault here (P1-06's decision). */
+    private Runnable onOpenKeySettings;
 
     @FXML
     @SuppressWarnings("unchecked")
@@ -160,6 +165,18 @@ public final class DashboardController {
     private void onCancel() {
         appendLog("cancel requested · in-flight probes stop within the connect timeout");
         coordinator.cancel();
+    }
+
+    /** Injected by App: opens the key-vault settings panel. */
+    public void setOpenKeySettingsHandler(Runnable handler) {
+        this.onOpenKeySettings = handler;
+    }
+
+    @FXML
+    private void onOpenKeys() {
+        if (onOpenKeySettings != null) {
+            onOpenKeySettings.run();
+        }
     }
 
     /** Called by {@code App.stop()}. Closes the coordinator. Idempotent. */

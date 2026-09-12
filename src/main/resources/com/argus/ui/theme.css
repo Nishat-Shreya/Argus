@@ -232,3 +232,70 @@
     -fx-background-color: -argus-bg-panel;
     -fx-text-fill: -argus-text-primary;
 }
+
+/* P1-07: key vault settings panel (plan section 7.8). Append-only -- the .root token block at
+   the top is pinned by ThemeResourceTest and must not be reordered or edited. */
+
+.key-vault-root {
+    -fx-background-color: -argus-bg-base;
+}
+
+.key-table {
+    -fx-background-color: -argus-bg-panel;
+    -fx-border-color: -argus-border;
+    -fx-border-width: 1;
+}
+
+.key-table .column-header-background {
+    -fx-background-color: -argus-bg-panel-alt;
+}
+
+.key-table .column-header {
+    -fx-background-color: -argus-bg-panel-alt;
+    -fx-border-color: -argus-border;
+}
+
+.key-table .column-header .label {
+    -fx-text-fill: -argus-text-secondary;
+}
+
+.key-table .table-row-cell {
+    -fx-background-color: -argus-bg-panel;
+    -fx-table-cell-border-color: -argus-border;
+}
+
+.key-table .table-row-cell:odd {
+    -fx-background-color: -argus-bg-panel-alt;
+}
+
+.key-table .table-row-cell:selected {
+    -fx-background-color: -argus-border-strong;
+}
+
+.key-table .table-cell {
+    -fx-text-fill: -argus-text-primary;
+}
+
+.key-editor {
+    -fx-background-color: -argus-bg-panel;
+    -fx-border-color: -argus-border;
+    -fx-border-width: 1;
+    -fx-background-radius: 6;
+    -fx-border-radius: 6;
+    -fx-padding: 24;
+    -fx-max-width: 360;
+    -fx-spacing: 12;
+}
+
+.key-status-set {
+    -fx-text-fill: -argus-accent;
+}
+
+.key-status-missing {
+    -fx-text-fill: -argus-text-muted;
+    -fx-border-color: -argus-border;
+    -fx-border-width: 1;
+    -fx-border-style: dashed;
+    -fx-border-radius: 3;
+    -fx-padding: 2 6;
+}

@@ -29,6 +29,15 @@ public final class App extends Application {
     /** FX-thread-confined: assigned once on unlock, closed by {@link #stop()} (invariant 6). */
     private DashboardController dashboardController;
 
+    /** FX-thread-confined: retained so returning from the key vault is a RESTORE, not a reload. */
+    private Parent dashboardRoot;
+
+    /** FX-thread-confined: assigned on first visit to the key-vault panel. */
+    private KeyVaultController keyVaultController;
+
+    /** FX-thread-confined: lazily loaded on first open, then retained. */
+    private Parent keyVaultRoot;
+
     @Override
     public void start(Stage stage) throws Exception {
         FXMLLoader loader = new FXMLLoader(getClass().getResource("login-view.fxml"));
@@ -44,8 +53,9 @@ public final class App extends Application {
             try {
                 FXMLLoader dashboardLoader =
                         new FXMLLoader(getClass().getResource("dashboard-view.fxml"));
-                Parent dashboardRoot = dashboardLoader.load();
+                this.dashboardRoot = dashboardLoader.load();
                 this.dashboardController = dashboardLoader.getController();
+                dashboardController.setOpenKeySettingsHandler(() -> showKeyVault(scene));
                 scene.setRoot(dashboardRoot);
             } catch (IOException e) {
                 throw new IllegalStateException("failed to load dashboard-view.fxml", e);
@@ -57,6 +67,28 @@ public final class App extends Application {
         stage.setMinHeight(600);
         stage.setScene(scene);
         stage.show();
+    }
+
+    /**
+     * Loads {@code key-vault-view.fxml} once, on first use, and retains it (plan §7.1's third
+     * screen via {@code scene.setRoot} swap — no modal Stage, no router). Every subsequent
+     * open reuses the same root and just calls {@link KeyVaultController#refresh()}.
+     */
+    private void showKeyVault(Scene scene) {
+        if (keyVaultRoot == null) {
+            try {
+                FXMLLoader keyVaultLoader =
+                        new FXMLLoader(getClass().getResource("key-vault-view.fxml"));
+                this.keyVaultRoot = keyVaultLoader.load();
+                this.keyVaultController = keyVaultLoader.getController();
+                keyVaultController.setVault(vault);
+                keyVaultController.setOnClose(() -> scene.setRoot(dashboardRoot));
+            } catch (IOException e) {
+                throw new IllegalStateException("failed to load key-vault-view.fxml", e);
+            }
+        }
+        keyVaultController.refresh();
+        scene.setRoot(keyVaultRoot);
     }
 
     /**

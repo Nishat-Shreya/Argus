@@ -36,7 +36,11 @@ class ToolkitFreeSourceTest {
             "PortScanJob.java",
             "SubdomainScanJob.java",
             "DefaultScanJobFactory.java",
-            "ScanCoordinator.java");
+            "ScanCoordinator.java",
+            "ApiKeySource.java",
+            "ApiKeyRow.java",
+            "ApiKeyRows.java",
+            "ApiKeyValidation.java");
 
     @Test
     void noneOfTheOrchestrationClassesImportJavaFx() {
@@ -62,9 +66,9 @@ class ToolkitFreeSourceTest {
     }
 
     @Test
-    void exactlyFifteenClassesAreChecked() {
-        assertTrue(TOOLKIT_FREE_CLASSES.size() == 15,
-                "expected 15 toolkit-free classes, found " + TOOLKIT_FREE_CLASSES.size());
+    void exactlyNineteenClassesAreChecked() {
+        assertTrue(TOOLKIT_FREE_CLASSES.size() == 19,
+                "expected 19 toolkit-free classes, found " + TOOLKIT_FREE_CLASSES.size());
     }
 
     private static boolean violatesImportRule(String line) {
