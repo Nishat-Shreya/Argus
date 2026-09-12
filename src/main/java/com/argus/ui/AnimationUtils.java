@@ -13,7 +13,8 @@ import javafx.util.Duration;
  * Shared motion library for every Argus screen.
  *
  * <p>Implemented in P0-02: {@link #fadeInUp(Node)} / {@link #fadeInUp(Node, Duration)},
- * plus the reduced-motion switch.
+ * plus the reduced-motion switch. Implemented in P1-05: {@link #shake(Node)}, the login
+ * screen's validation-error feedback (plan section 7.11).
  *
  * <p>Not yet implemented (build-prompt "Standard motion types") — add each one in the
  * backlog item that first needs it, never as an empty placeholder:
@@ -21,7 +22,6 @@ import javafx.util.Duration;
  *   scaleIn          modals/popups                 — first needed by P2-09
  *   glowPulse        KEV / attention containers    — first needed by P2-07 UI
  *   pulseDot         live status indicator         — first needed by P1-06
- *   shake            validation error feedback     — first needed by P1-06
  *   rippleOnClick    primary buttons               — first needed by P1-06
  *   click-to-expand  annotation field              — first needed by P3-06
  * </pre>
@@ -33,6 +33,10 @@ public final class AnimationUtils {
 
     private static final Duration DURATION = Duration.millis(220);
     private static final double OFFSET_Y = 8;
+
+    private static final Duration SHAKE_LEG_DURATION = Duration.millis(55);
+    private static final double SHAKE_OFFSET_X = 8;
+    private static final int SHAKE_CYCLE_COUNT = 6;
 
     /**
      * Visibility-only shared flag. Every access is an unconditional whole-word read or
@@ -91,5 +95,34 @@ public final class AnimationUtils {
     /** Runtime override for a future settings toggle and for tests. */
     public static void setReducedMotion(boolean reduced) {
         reducedMotion = reduced;
+    }
+
+    /**
+     * Validation-error feedback: a horizontal shake, ~55&nbsp;ms per leg, {@code byX = 8},
+     * {@code cycleCount = 6}, {@code autoReverse = true}. Mirrors {@link #fadeInUp(Node)}'s
+     * guard contract exactly so the class stays predictable: {@code fadeInUp} owns
+     * {@code translateY} and {@code shake} owns {@code translateX}, so they compose without
+     * fighting.
+     */
+    public static void shake(Node node) {
+        Objects.requireNonNull(node, "node");
+        if (!Platform.isFxApplicationThread()) {
+            throw new IllegalStateException(
+                    "shake must be called on the JavaFX Application Thread");
+        }
+
+        if (isReducedMotion()) {
+            node.setTranslateX(0);
+            return;
+        }
+
+        TranslateTransition shake = new TranslateTransition(SHAKE_LEG_DURATION, node);
+        shake.setFromX(0);
+        shake.setByX(SHAKE_OFFSET_X);
+        shake.setCycleCount(SHAKE_CYCLE_COUNT);
+        shake.setAutoReverse(true);
+        shake.setInterpolator(Interpolator.EASE_OUT);
+        shake.setOnFinished(event -> node.setTranslateX(0));
+        shake.play();
     }
 }

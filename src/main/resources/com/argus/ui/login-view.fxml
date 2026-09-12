@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.PasswordField?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.layout.StackPane?>
+<?import javafx.scene.layout.VBox?>
+
+<StackPane xmlns="http://javafx.com/javafx/21"
+           xmlns:fx="http://javafx.com/fxml/1"
+           fx:controller="com.argus.ui.LoginController"
+           styleClass="login-root">
+    <VBox fx:id="card" styleClass="card" alignment="CENTER" spacing="12">
+        <Label text="argus" styleClass="card-title"/>
+        <Label text="operator login" styleClass="card-subtitle"/>
+        <TextField fx:id="operatorIdField" promptText="operator id" styleClass="field"/>
+        <PasswordField fx:id="masterPasswordField" promptText="master password" styleClass="field"/>
+        <Button fx:id="unlockButton" text="unlock vault" styleClass="primary-button"
+                onAction="#onUnlock" defaultButton="true"/>
+        <Label fx:id="messageLabel" styleClass="form-error" visible="false" managed="false"
+               wrapText="true"/>
+    </VBox>
+</StackPane>

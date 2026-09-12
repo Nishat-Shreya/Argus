@@ -50,3 +50,75 @@
     -fx-text-fill: -argus-accent;
     -fx-font-size: 15px;
 }
+
+/* P1-05: login screen (plan section 7.12). Append-only -- the .root token block above is
+   pinned by ThemeResourceTest and must not be reordered or edited. */
+
+.login-root {
+    -fx-background-color: -argus-bg-base;
+    -fx-alignment: center;
+}
+
+.card {
+    -fx-background-color: -argus-bg-panel;
+    -fx-border-color: -argus-border;
+    -fx-border-width: 1;
+    -fx-background-radius: 6;
+    -fx-border-radius: 6;
+    -fx-padding: 32;
+    -fx-max-width: 420;
+    -fx-spacing: 12;
+}
+
+.card-title {
+    -fx-text-fill: -argus-accent;
+    -fx-font-size: 22px;
+}
+
+.card-subtitle {
+    -fx-text-fill: -argus-text-secondary;
+    -fx-font-size: 13px;
+}
+
+.field {
+    -fx-background-color: -argus-bg-panel-alt;
+    -fx-border-color: -argus-border;
+    -fx-border-width: 1;
+    -fx-background-radius: 4;
+    -fx-border-radius: 4;
+    -fx-text-fill: -argus-text-primary;
+    -fx-prompt-text-fill: -argus-text-muted;
+    -fx-padding: 8;
+}
+
+.field:focused {
+    -fx-border-color: -argus-border-strong;
+}
+
+.primary-button {
+    -fx-background-color: -argus-accent;
+    -fx-text-fill: -argus-bg-base;
+    -fx-background-radius: 4;
+    -fx-padding: 8 16;
+    -fx-font-weight: bold;
+}
+
+.primary-button:hover {
+    -fx-background-color: -argus-accent-hover;
+}
+
+.form-error {
+    -fx-text-fill: -argus-danger-text;
+    -fx-background-color: -argus-danger-bg;
+    -fx-border-color: -argus-danger-border;
+    -fx-border-width: 1;
+    -fx-background-radius: 4;
+    -fx-border-radius: 4;
+    -fx-padding: 6 10;
+    -fx-font-size: 12px;
+}
+
+.form-hint {
+    -fx-text-fill: -argus-text-muted;
+    -fx-font-size: 12px;
+}
