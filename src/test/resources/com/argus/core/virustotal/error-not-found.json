@@ -1,0 +1,6 @@
+{
+  "error": {
+    "code": "NotFoundError",
+    "message": "Domain 'never-seen-this-one.example' not found"
+  }
+}

@@ -1,0 +1,27 @@
+{
+  "data": {
+    "id": "tag-heavy-example.com",
+    "type": "domain",
+    "attributes": {
+      "last_analysis_stats": {
+        "harmless": 40,
+        "malicious": 0,
+        "suspicious": 0,
+        "undetected": 50,
+        "timeout": 0
+      },
+      "reputation": 0,
+      "tags": [
+        "tag-number-one-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "tag-number-two-bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        "tag-number-three-cccccccccccccccccccccccccccccccccccccccccc",
+        "tag-number-four-dddddddddddddddddddddddddddddddddddddddddddd",
+        "tag-number-five-eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+        "tag-number-six-ffffffffffffffffffffffffffffffffffffffffffffff",
+        "tag-number-seven-gggggggggggggggggggggggggggggggggggggggggggg",
+        "tag-number-eight-hhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhh"
+      ],
+      "registrar": "Example Registrar, LLC"
+    }
+  }
+}

@@ -1,0 +1,30 @@
+{
+  "data": {
+    "id": "example.com",
+    "type": "domain",
+    "attributes": {
+      "last_analysis_stats": {
+        "harmless": 70,
+        "malicious": 0,
+        "suspicious": 0,
+        "undetected": 20,
+        "timeout": 0
+      },
+      "reputation": 45,
+      "total_votes": {
+        "harmless": 32,
+        "malicious": 0
+      },
+      "categories": {
+        "Sophos": "business"
+      },
+      "tags": [],
+      "registrar": "Example Registrar, LLC",
+      "jarm": "29d29d00029d29d00042d42d0000000000000000000000000000000000000",
+      "last_dns_records": [
+        {"type": "A", "value": "93.184.216.34", "ttl": 3600}
+      ],
+      "whois": "Domain Name: EXAMPLE.COM\nRegistrar: Example Registrar, LLC"
+    }
+  }
+}

@@ -1,0 +1,32 @@
+{
+  "data": {
+    "id": "example-malicious.com",
+    "type": "domain",
+    "attributes": {
+      "last_analysis_stats": {
+        "harmless": 60,
+        "malicious": 2,
+        "suspicious": 1,
+        "undetected": 30,
+        "timeout": 1
+      },
+      "reputation": -12,
+      "total_votes": {
+        "harmless": 10,
+        "malicious": 5
+      },
+      "categories": {
+        "Forcepoint ThreatSeeker": "phishing",
+        "Sophos": "malware",
+        "BitDefender": "phishing"
+      },
+      "tags": ["phishing", "malware"],
+      "registrar": "MarkMonitor Inc.",
+      "jarm": "07d14d16d21d21d07c42d41d00041d24a458a375eef0c576d23a7bab9a9fb",
+      "last_dns_records": [
+        {"type": "A", "value": "203.0.113.5", "ttl": 300}
+      ],
+      "whois": "Domain Name: EXAMPLE-MALICIOUS.COM\nRegistrar: MarkMonitor Inc."
+    }
+  }
+}

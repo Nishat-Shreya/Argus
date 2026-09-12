@@ -1,0 +1,32 @@
+{
+  "data": {
+    "id": "8.8.8.8",
+    "type": "ip_address",
+    "attributes": {
+      "last_analysis_stats": {
+        "harmless": 50,
+        "malicious": 1,
+        "suspicious": 0,
+        "undetected": 10,
+        "timeout": 0
+      },
+      "reputation": 3,
+      "total_votes": {
+        "harmless": 8,
+        "malicious": 1
+      },
+      "categories": {
+        "alphaMountain.ai": "networking"
+      },
+      "tags": ["hosting"],
+      "asn": 15169,
+      "as_owner": "GOOGLE",
+      "country": "US",
+      "network": "8.8.8.0/24",
+      "continent": "NA",
+      "regional_internet_registry": "ARIN",
+      "jarm": "00000000000000000000000000000000000000000000000000000000000000",
+      "whois": "NetRange: 8.8.8.0 - 8.8.8.255\nOrgName: Google LLC"
+    }
+  }
+}

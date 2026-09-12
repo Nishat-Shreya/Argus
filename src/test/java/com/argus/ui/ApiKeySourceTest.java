@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.argus.core.ApiKeyNames;
+import com.argus.core.VirusTotalSource;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.regex.Pattern;
@@ -65,5 +66,17 @@ class ApiKeySourceTest {
             assertFalse(source.authHint().toLowerCase().contains("http"),
                     source + " authHint must not contain a URL: " + source.authHint());
         }
+    }
+
+    /**
+     * The cross-check P1-07 R4 said "nothing can verify until P2-02 exists" (plan §6.7):
+     * ApiKeySource.VIRUSTOTAL must name the same source and vault entry as the real
+     * VirusTotalSource IntelSource implementation.
+     */
+    @Test
+    void virustotalCatalogueEntryMatchesTheIntelSourceImplementation() {
+        assertEquals(VirusTotalSource.NAME, ApiKeySource.VIRUSTOTAL.sourceName());
+        assertEquals(ApiKeySource.VIRUSTOTAL.entryName(),
+                ApiKeyNames.forSource(VirusTotalSource.NAME));
     }
 }

@@ -1,0 +1,14 @@
+{
+  "data": {
+    "id": "brand-new-domain.com",
+    "type": "domain",
+    "attributes": {
+      "registrar": "Fresh Registrar, Inc.",
+      "creation_date": 1893456000,
+      "last_dns_records": [
+        {"type": "A", "value": "198.51.100.9", "ttl": 300}
+      ],
+      "whois": "Domain Name: BRAND-NEW-DOMAIN.COM\nRegistrar: Fresh Registrar, Inc."
+    }
+  }
+}
