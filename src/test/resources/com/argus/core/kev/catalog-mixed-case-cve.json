@@ -1,0 +1,30 @@
+{
+  "title": "CISA Catalog of Known Exploited Vulnerabilities",
+  "catalogVersion": "2026.09.11",
+  "dateReleased": "2026-09-11T19:32:16.8993Z",
+  "count": 2,
+  "vulnerabilities": [
+    {
+      "cveID": "cve-2021-44228",
+      "vendorProject": "Apache",
+      "product": "Log4j2",
+      "vulnerabilityName": "Apache Log4j2 Remote Code Execution Vulnerability",
+      "dateAdded": "2021-12-10",
+      "shortDescription": "KEV-FIXTURE-PLACEHOLDER short description.",
+      "requiredAction": "KEV-FIXTURE-PLACEHOLDER required action.",
+      "dueDate": "2021-12-24",
+      "knownRansomwareCampaignUse": "Known"
+    },
+    {
+      "cveID": "  CVE-2022-30190  ",
+      "vendorProject": "Microsoft",
+      "product": "Windows",
+      "vulnerabilityName": "Microsoft Windows Support Diagnostic Tool (MSDT) Remote Code Execution Vulnerability",
+      "dateAdded": "2022-06-01",
+      "shortDescription": "KEV-FIXTURE-PLACEHOLDER short description.",
+      "requiredAction": "KEV-FIXTURE-PLACEHOLDER required action.",
+      "dueDate": "2022-06-15",
+      "knownRansomwareCampaignUse": "Unknown"
+    }
+  ]
+}
