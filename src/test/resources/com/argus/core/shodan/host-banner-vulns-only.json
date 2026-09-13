@@ -1,0 +1,42 @@
+{
+  "ip_str": "198.51.100.25",
+  "ports": [80, 8443],
+  "hostnames": ["legacy.example-host.test"],
+  "org": "Example Hosting LLC",
+  "isp": "Example Hosting LLC",
+  "asn": "AS64500",
+  "os": "Linux 2.6",
+  "country_name": "United States",
+  "data": [
+    {
+      "port": 80,
+      "transport": "tcp",
+      "product": "Apache httpd",
+      "version": "2.2.15",
+      "data": "HTTP/1.1 200 OK\r\n",
+      "vulns": {
+        "CVE-2014-0226": {
+          "references": ["https://nvd.nist.gov/vuln/detail/CVE-2014-0226"],
+          "verified": true,
+          "cvss": 7.5,
+          "summary": "Race condition in Apache httpd mod_status."
+        }
+      }
+    },
+    {
+      "port": 8443,
+      "transport": "tcp",
+      "product": "Apache httpd",
+      "version": "2.2.15",
+      "data": "HTTP/1.1 200 OK\r\n",
+      "vulns": {
+        "CVE-2017-3167": {
+          "references": ["https://nvd.nist.gov/vuln/detail/CVE-2017-3167"],
+          "verified": false,
+          "cvss": 6.8,
+          "summary": "Inferred from product/version metadata."
+        }
+      }
+    }
+  ]
+}

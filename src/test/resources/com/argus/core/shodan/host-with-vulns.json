@@ -1,0 +1,41 @@
+{
+  "ip_str": "198.51.100.23",
+  "ports": [22, 80, 443],
+  "hostnames": ["www.example-host.test", "mail.example-host.test"],
+  "domains": ["example-host.test"],
+  "org": "Example Hosting LLC",
+  "isp": "Example Hosting LLC",
+  "asn": "AS64500",
+  "os": "Linux 3.x",
+  "tags": ["cloud", "self-signed"],
+  "country_name": "United States",
+  "last_update": "2026-08-01T12:00:00.000000",
+  "vulns": ["CVE-2021-44228", "cve-2020-1938", "CVE-2019-0211"],
+  "data": [
+    {
+      "port": 22,
+      "transport": "tcp",
+      "product": "OpenSSH",
+      "version": "7.4",
+      "data": "SSH-2.0-OpenSSH_7.4 SHODAN-FIXTURE-TOKEN-22\r\n",
+      "timestamp": "2026-08-01T12:00:00.000000"
+    },
+    {
+      "port": 80,
+      "transport": "tcp",
+      "product": "Apache httpd",
+      "version": "2.4.29",
+      "data": "HTTP/1.1 200 OK SHODAN-FIXTURE-TOKEN-80\r\n",
+      "http": {"html": "<html>SHODAN-FIXTURE-TOKEN-HTML</html>"},
+      "timestamp": "2026-08-01T12:00:00.000000"
+    },
+    {
+      "port": 443,
+      "transport": "tcp",
+      "product": "Apache httpd",
+      "version": "2.4.29",
+      "data": "HTTP/1.1 200 OK SHODAN-FIXTURE-TOKEN-443\r\n",
+      "timestamp": "2026-08-01T12:00:00.000000"
+    }
+  ]
+}

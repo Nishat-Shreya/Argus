@@ -1,0 +1,22 @@
+{
+  "ip_str": "198.51.100.40",
+  "ports": [80],
+  "org": "Example Hosting LLC",
+  "vulns": ["cve-2021-44228"],
+  "data": [
+    {
+      "port": 80,
+      "transport": "tcp",
+      "product": "Apache Tomcat",
+      "version": "9.0.1",
+      "vulns": {
+        "CVE-2021-44228": {
+          "references": ["https://nvd.nist.gov/vuln/detail/CVE-2021-44228"],
+          "verified": true,
+          "cvss": 10.0,
+          "summary": "Log4Shell."
+        }
+      }
+    }
+  ]
+}

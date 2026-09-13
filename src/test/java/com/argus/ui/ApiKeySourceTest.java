@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.argus.core.ApiKeyNames;
+import com.argus.core.ShodanSource;
 import com.argus.core.VirusTotalSource;
 import java.util.HashSet;
 import java.util.Set;
@@ -78,5 +79,16 @@ class ApiKeySourceTest {
         assertEquals(VirusTotalSource.NAME, ApiKeySource.VIRUSTOTAL.sourceName());
         assertEquals(ApiKeySource.VIRUSTOTAL.entryName(),
                 ApiKeyNames.forSource(VirusTotalSource.NAME));
+    }
+
+    /**
+     * Shodan's share of the same cross-check (plan §6.7). P2-04 and P2-05 each still owe the
+     * same one-line assertion.
+     */
+    @Test
+    void shodanCatalogueEntryMatchesTheIntelSourceImplementation() {
+        assertEquals(ShodanSource.NAME, ApiKeySource.SHODAN.sourceName());
+        assertEquals(ApiKeySource.SHODAN.entryName(),
+                ApiKeyNames.forSource(ShodanSource.NAME));
     }
 }

@@ -1,0 +1,171 @@
+{
+  "ip_str": "198.51.100.28",
+  "ports": [
+    20001,
+    20002,
+    20003,
+    20004,
+    20005,
+    20006,
+    20007,
+    20008,
+    20009,
+    20010,
+    20011,
+    20012,
+    20013,
+    20014,
+    20015,
+    20016,
+    20017,
+    20018,
+    20019,
+    20020,
+    20021,
+    20022,
+    20023,
+    20024,
+    20025,
+    20026,
+    20027,
+    20028,
+    20029,
+    20030,
+    20031,
+    20032,
+    20033,
+    20034,
+    20035,
+    20036,
+    20037,
+    20038,
+    20039,
+    20040
+  ],
+  "hostnames": [
+    "wide.example-host.test"
+  ],
+  "org": "Example Hosting LLC",
+  "isp": "Example Hosting LLC",
+  "asn": "AS64500",
+  "os": "Linux 3.x",
+  "tags": [
+    "cloud",
+    "wide-surface"
+  ],
+  "country_name": "United States",
+  "vulns": [
+    "CVE-2020-0601",
+    "CVE-2020-1938",
+    "CVE-2019-0211",
+    "CVE-2018-11776",
+    "CVE-2017-5638",
+    "CVE-2017-3167",
+    "CVE-2016-6515",
+    "CVE-2015-1635"
+  ],
+  "data": [
+    {
+      "port": 20001,
+      "transport": "tcp",
+      "product": "Extremely-Long-Enterprise-Application-Server-Product-Name-Suite",
+      "version": "Version-9.8.7-Enterprise-Edition-Build-20260101-Patchlevel-42",
+      "data": "BANNER SHODAN-FIXTURE-MANY-TOKEN-20001\r\n",
+      "vulns": {
+        "CVE-2014-0160": {
+          "references": [
+            "https://nvd.nist.gov/vuln/detail/CVE-2014-0160"
+          ],
+          "verified": true,
+          "cvss": 7.0,
+          "summary": "Fixture vulnerability 0."
+        }
+      }
+    },
+    {
+      "port": 20002,
+      "transport": "tcp",
+      "product": "Extremely-Long-Enterprise-Application-Server-Product-Name-Suite",
+      "version": "Version-9.8.7-Enterprise-Edition-Build-20260101-Patchlevel-42",
+      "data": "BANNER SHODAN-FIXTURE-MANY-TOKEN-20002\r\n",
+      "vulns": {
+        "CVE-2021-44228": {
+          "references": [
+            "https://nvd.nist.gov/vuln/detail/CVE-2021-44228"
+          ],
+          "verified": false,
+          "cvss": 7.1,
+          "summary": "Fixture vulnerability 1."
+        }
+      }
+    },
+    {
+      "port": 20003,
+      "transport": "tcp",
+      "product": "Extremely-Long-Enterprise-Application-Server-Product-Name-Suite",
+      "version": "Version-9.8.7-Enterprise-Edition-Build-20260101-Patchlevel-42",
+      "data": "BANNER SHODAN-FIXTURE-MANY-TOKEN-20003\r\n",
+      "vulns": {
+        "CVE-2021-34527": {
+          "references": [
+            "https://nvd.nist.gov/vuln/detail/CVE-2021-34527"
+          ],
+          "verified": true,
+          "cvss": 7.2,
+          "summary": "Fixture vulnerability 2."
+        }
+      }
+    },
+    {
+      "port": 20004,
+      "transport": "tcp",
+      "product": "Extremely-Long-Enterprise-Application-Server-Product-Name-Suite",
+      "version": "Version-9.8.7-Enterprise-Edition-Build-20260101-Patchlevel-42",
+      "data": "BANNER SHODAN-FIXTURE-MANY-TOKEN-20004\r\n",
+      "vulns": {
+        "CVE-2022-22965": {
+          "references": [
+            "https://nvd.nist.gov/vuln/detail/CVE-2022-22965"
+          ],
+          "verified": false,
+          "cvss": 7.3,
+          "summary": "Fixture vulnerability 3."
+        }
+      }
+    },
+    {
+      "port": 20005,
+      "transport": "tcp",
+      "product": "Extremely-Long-Enterprise-Application-Server-Product-Name-Suite",
+      "version": "Version-9.8.7-Enterprise-Edition-Build-20260101-Patchlevel-42",
+      "data": "BANNER SHODAN-FIXTURE-MANY-TOKEN-20005\r\n",
+      "vulns": {
+        "CVE-2023-23397": {
+          "references": [
+            "https://nvd.nist.gov/vuln/detail/CVE-2023-23397"
+          ],
+          "verified": true,
+          "cvss": 7.4,
+          "summary": "Fixture vulnerability 4."
+        }
+      }
+    },
+    {
+      "port": 20006,
+      "transport": "tcp",
+      "product": "Extremely-Long-Enterprise-Application-Server-Product-Name-Suite",
+      "version": "Version-9.8.7-Enterprise-Edition-Build-20260101-Patchlevel-42",
+      "data": "BANNER SHODAN-FIXTURE-MANY-TOKEN-20006\r\n",
+      "vulns": {
+        "CVE-2024-3094": {
+          "references": [
+            "https://nvd.nist.gov/vuln/detail/CVE-2024-3094"
+          ],
+          "verified": false,
+          "cvss": 7.5,
+          "summary": "Fixture vulnerability 5."
+        }
+      }
+    }
+  ]
+}

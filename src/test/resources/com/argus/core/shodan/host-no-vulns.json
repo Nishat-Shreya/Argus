@@ -1,0 +1,31 @@
+{
+  "ip_str": "198.51.100.24",
+  "ports": [80, 443],
+  "hostnames": ["clean.example-host.test"],
+  "domains": ["example-host.test"],
+  "org": "Example Hosting LLC",
+  "isp": "Example Hosting LLC",
+  "asn": "AS64500",
+  "os": "Linux 3.x",
+  "tags": ["cloud"],
+  "country_name": "United States",
+  "last_update": "2026-08-01T12:00:00.000000",
+  "data": [
+    {
+      "port": 80,
+      "transport": "tcp",
+      "product": "nginx",
+      "version": "1.25.3",
+      "data": "HTTP/1.1 200 OK\r\n",
+      "timestamp": "2026-08-01T12:00:00.000000"
+    },
+    {
+      "port": 443,
+      "transport": "tcp",
+      "product": "nginx",
+      "version": "1.25.3",
+      "data": "HTTP/1.1 200 OK\r\n",
+      "timestamp": "2026-08-01T12:00:00.000000"
+    }
+  ]
+}
