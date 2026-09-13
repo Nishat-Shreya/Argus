@@ -1,0 +1,23 @@
+{
+  "data": {
+    "ipAddress": "198.51.100.78",
+    "isPublic": true,
+    "ipVersion": 4,
+    "isWhitelisted": false,
+    "abuseConfidenceScore": 75,
+    "countryCode": "US",
+    "countryName": "United States",
+    "totalReports": 20,
+    "numDistinctUsers": 9,
+    "reports": [
+      {
+        "categories": [18],
+        "comment": "ABUSEIPDB-FIXTURE-COMMENT-TOKEN-5",
+        "reporterId": 55555,
+        "reporterCountryCode": "US",
+        "reporterCountryName": "United States",
+        "reportedAt": "2026-08-15T00:00:00+00:00"
+      }
+    ]
+  }
+}

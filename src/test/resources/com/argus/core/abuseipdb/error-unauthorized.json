@@ -1,0 +1,8 @@
+{
+  "errors": [
+    {
+      "detail": "Authentication failed. Your API key is not registered. ABUSEIPDB-FIXTURE-ERROR-TOKEN",
+      "status": 401
+    }
+  ]
+}

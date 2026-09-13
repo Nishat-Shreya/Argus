@@ -1,0 +1,20 @@
+{
+  "data": {
+    "ipAddress": "10.0.0.5",
+    "isPublic": false,
+    "ipVersion": 4,
+    "isWhitelisted": false,
+    "abuseConfidenceScore": 0,
+    "countryCode": null,
+    "countryName": null,
+    "usageType": null,
+    "isp": null,
+    "domain": null,
+    "hostnames": [],
+    "isTor": false,
+    "totalReports": 0,
+    "numDistinctUsers": 0,
+    "lastReportedAt": null,
+    "reports": []
+  }
+}

@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import com.argus.core.AbuseIpdbSource;
 import com.argus.core.ApiKeyNames;
 import com.argus.core.ShodanSource;
 import com.argus.core.VirusTotalSource;
@@ -90,5 +91,16 @@ class ApiKeySourceTest {
         assertEquals(ShodanSource.NAME, ApiKeySource.SHODAN.sourceName());
         assertEquals(ApiKeySource.SHODAN.entryName(),
                 ApiKeyNames.forSource(ShodanSource.NAME));
+    }
+
+    /**
+     * AbuseIPDB's share of the same cross-check (plan §6.7/§6.8). P2-05 still owes the same
+     * one-line assertion for Censys.
+     */
+    @Test
+    void abuseipdbCatalogueEntryMatchesTheIntelSourceImplementation() {
+        assertEquals(AbuseIpdbSource.NAME, ApiKeySource.ABUSEIPDB.sourceName());
+        assertEquals(ApiKeySource.ABUSEIPDB.entryName(),
+                ApiKeyNames.forSource(AbuseIpdbSource.NAME));
     }
 }

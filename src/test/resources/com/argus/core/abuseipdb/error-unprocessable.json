@@ -1,0 +1,11 @@
+{
+  "errors": [
+    {
+      "detail": "The ipAddress field must be a valid IPv4 or IPv6 address. ABUSEIPDB-FIXTURE-ERROR-TOKEN",
+      "status": 422,
+      "source": {
+        "parameter": "ipAddress"
+      }
+    }
+  ]
+}

@@ -1,0 +1,14 @@
+{
+  "data": {
+    "ipAddress": "198.51.100.84",
+    "isPublic": true,
+    "ipVersion": 4,
+    "isWhitelisted": false,
+    "abuseConfidenceScore": 250,
+    "countryCode": "US",
+    "countryName": "United States",
+    "totalReports": 5,
+    "numDistinctUsers": 2,
+    "reports": []
+  }
+}

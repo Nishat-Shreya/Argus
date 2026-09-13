@@ -1,0 +1,29 @@
+{
+  "data": {
+    "ipAddress": "198.51.100.81",
+    "isPublic": true,
+    "ipVersion": 4,
+    "isWhitelisted": true,
+    "abuseConfidenceScore": 88,
+    "countryCode": "US",
+    "countryName": "United States",
+    "usageType": "Data Center/Web Hosting/Transit",
+    "isp": "Example Hosting LLC",
+    "domain": "example-host.test",
+    "hostnames": [],
+    "isTor": false,
+    "totalReports": 50,
+    "numDistinctUsers": 15,
+    "lastReportedAt": "2026-09-01T00:00:00+00:00",
+    "reports": [
+      {
+        "categories": [18],
+        "comment": "ABUSEIPDB-FIXTURE-COMMENT-TOKEN-8",
+        "reporterId": 88888,
+        "reporterCountryCode": "US",
+        "reporterCountryName": "United States",
+        "reportedAt": "2026-09-01T00:00:00+00:00"
+      }
+    ]
+  }
+}

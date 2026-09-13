@@ -1,0 +1,37 @@
+{
+  "data": {
+    "ipAddress": "203.0.113.42",
+    "isPublic": true,
+    "ipVersion": 4,
+    "isWhitelisted": false,
+    "abuseConfidenceScore": 42,
+    "countryCode": "US",
+    "countryName": "United States",
+    "usageType": "Data Center/Web Hosting/Transit",
+    "isp": "Example Hosting LLC",
+    "domain": "example-host.test",
+    "hostnames": ["host1.example-host.test"],
+    "isTor": false,
+    "totalReports": 7,
+    "numDistinctUsers": 4,
+    "lastReportedAt": "2026-08-01T12:00:00+00:00",
+    "reports": [
+      {
+        "reportedAt": "2026-08-01T12:00:00+00:00",
+        "comment": "ABUSEIPDB-FIXTURE-COMMENT-TOKEN-1 ssh brute force attempts from this host",
+        "categories": [18],
+        "reporterId": 11111,
+        "reporterCountryCode": "DE",
+        "reporterCountryName": "Germany"
+      },
+      {
+        "reportedAt": "2026-07-28T08:30:00+00:00",
+        "comment": "ABUSEIPDB-FIXTURE-COMMENT-TOKEN-2 repeated ssh login failures",
+        "categories": [22],
+        "reporterId": 22222,
+        "reporterCountryCode": "FR",
+        "reporterCountryName": "France"
+      }
+    ]
+  }
+}

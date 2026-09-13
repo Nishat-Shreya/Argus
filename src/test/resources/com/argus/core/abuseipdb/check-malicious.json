@@ -1,0 +1,37 @@
+{
+  "data": {
+    "ipAddress": "198.51.100.77",
+    "isPublic": true,
+    "ipVersion": 4,
+    "isWhitelisted": false,
+    "abuseConfidenceScore": 100,
+    "countryCode": "CN",
+    "countryName": "China",
+    "usageType": "Data Center/Web Hosting/Transit",
+    "isp": "Example Cloud Computing",
+    "domain": "example-cloud.test",
+    "hostnames": ["node1.example-cloud.test"],
+    "isTor": false,
+    "totalReports": 380,
+    "numDistinctUsers": 91,
+    "lastReportedAt": "2026-09-10T03:00:00+00:00",
+    "reports": [
+      {
+        "reportedAt": "2026-09-10T03:00:00+00:00",
+        "comment": "ABUSEIPDB-FIXTURE-COMMENT-TOKEN-3 port scanning our network",
+        "categories": [14],
+        "reporterId": 33333,
+        "reporterCountryCode": "US",
+        "reporterCountryName": "United States"
+      },
+      {
+        "reportedAt": "2026-09-09T11:00:00+00:00",
+        "comment": "ABUSEIPDB-FIXTURE-COMMENT-TOKEN-4 ssh brute forcing",
+        "categories": [18, 22],
+        "reporterId": 44444,
+        "reporterCountryCode": "GB",
+        "reporterCountryName": "United Kingdom"
+      }
+    ]
+  }
+}
