@@ -1,0 +1,15 @@
+{
+  "result": {
+    "resource": {
+      "hostname": "dupe-cve.example.com",
+      "port": 443,
+      "vulns": [
+        {"id": "cve-2021-44228", "name": "Log4Shell", "severity": "critical", "risk_source": "cve"}
+      ],
+      "exposures": [
+        {"id": "CVE-2021-44228", "name": "Log4Shell (exposure view)", "severity": "critical", "risk_source": "cve"}
+      ]
+    },
+    "extensions": {}
+  }
+}

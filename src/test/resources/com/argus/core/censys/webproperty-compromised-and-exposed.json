@@ -1,0 +1,18 @@
+{
+  "result": {
+    "resource": {
+      "hostname": "both.example.com",
+      "port": 443,
+      "exposures": [
+        {"id": "CENSYS-EXPOSURE-1", "name": "Open directory listing", "severity": "medium", "risk_source": "censys"}
+      ],
+      "misconfigs": [
+        {"id": "CENSYS-MISCONFIG-1", "name": "Missing HSTS header", "severity": "low", "risk_source": "censys"}
+      ],
+      "compromises": [
+        {"id": "CENSYS-COMPROMISE-1", "name": "Observed serving malware", "severity": "critical", "risk_source": "censys"}
+      ]
+    },
+    "extensions": {}
+  }
+}

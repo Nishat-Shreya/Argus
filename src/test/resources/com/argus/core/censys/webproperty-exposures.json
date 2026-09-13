@@ -1,0 +1,16 @@
+{
+  "result": {
+    "resource": {
+      "hostname": "exposed.example.com",
+      "port": 443,
+      "exposures": [
+        {"id": "CENSYS-EXPOSURE-1", "name": "Open directory listing", "severity": "medium", "risk_source": "censys"},
+        {"id": "CENSYS-EXPOSURE-2", "name": "Default admin panel", "severity": "high", "risk_source": "censys"}
+      ],
+      "misconfigs": [
+        {"id": "CENSYS-MISCONFIG-1", "name": "Missing HSTS header", "severity": "low", "risk_source": "censys"}
+      ]
+    },
+    "extensions": {}
+  }
+}

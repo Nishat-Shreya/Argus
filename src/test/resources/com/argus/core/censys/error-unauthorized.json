@@ -1,0 +1,7 @@
+{
+  "error": {
+    "code": 401,
+    "message": "Access credentials are invalid",
+    "reason": "Access token is not active"
+  }
+}

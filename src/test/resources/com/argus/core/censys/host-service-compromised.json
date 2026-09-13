@@ -1,0 +1,18 @@
+{
+  "result": {
+    "resource": {
+      "ip": "198.51.100.30",
+      "services": [
+        {
+          "port": 445,
+          "protocol": "SMB",
+          "compromises": [
+            {"id": "CENSYS-COMPROMISE-HOST-1", "name": "Observed participating in a botnet", "severity": "critical", "risk_source": "censys"}
+          ]
+        }
+      ],
+      "service_count": 1
+    },
+    "extensions": {}
+  }
+}

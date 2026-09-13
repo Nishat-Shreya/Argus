@@ -1,0 +1,24 @@
+{
+  "result": {
+    "resource": {
+      "ip": "198.51.100.50",
+      "services": [
+        {
+          "port": 22,
+          "protocol": "SSH",
+          "banner": "CENSYS-FIXTURE-FORBIDDEN-BANNER SSH-2.0-OpenSSH_7.4",
+          "banner_hash_sha256": "CENSYS-FIXTURE-FORBIDDEN-BANNER-HASH"
+        }
+      ],
+      "service_count": 1,
+      "whois": {
+        "raw": "CENSYS-FIXTURE-FORBIDDEN-WHOIS-RECORD"
+      },
+      "dns": {
+        "names": ["CENSYS-FIXTURE-FORBIDDEN-DNS-NAME.test"],
+        "reverse_dns": ["CENSYS-FIXTURE-FORBIDDEN-REVERSE-DNS.test"]
+      }
+    },
+    "extensions": {}
+  }
+}

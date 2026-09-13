@@ -1,0 +1,25 @@
+{
+  "result": {
+    "resource": {
+      "hostname": "vulnerable.example.com",
+      "port": 443,
+      "vulns": [
+        {
+          "id": "CVE-2021-44228",
+          "name": "Log4Shell",
+          "severity": "critical",
+          "risk_source": "cve",
+          "kev": ["known-exploited"]
+        },
+        {
+          "id": "CVE-2022-22965",
+          "name": "Spring4Shell",
+          "severity": "high",
+          "risk_source": "cve",
+          "kev": []
+        }
+      ]
+    },
+    "extensions": {}
+  }
+}

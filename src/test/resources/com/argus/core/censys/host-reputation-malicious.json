@@ -1,0 +1,18 @@
+{
+  "result": {
+    "resource": {
+      "ip": "198.51.100.40",
+      "services": [
+        {"port": 443, "protocol": "HTTPS"}
+      ],
+      "service_count": 1,
+      "reputation": {
+        "score": 0.95,
+        "score_level": "malicious",
+        "label": "botnet-member",
+        "model_version": "1.0"
+      }
+    },
+    "extensions": {}
+  }
+}

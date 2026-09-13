@@ -1,0 +1,173 @@
+{
+  "result": {
+    "resource": {
+      "hostname": "overflow.example.com",
+      "port": 443,
+      "software": [
+        {
+          "vendor": "Vendor0",
+          "product": "Product0YYYYYYYYYYYYYYYYYYYYYYYYYYYYYY",
+          "version": "1.0.0"
+        },
+        {
+          "vendor": "Vendor1",
+          "product": "Product1YYYYYYYYYYYYYYYYYYYYYYYYYYYYYY",
+          "version": "1.0.1"
+        },
+        {
+          "vendor": "Vendor2",
+          "product": "Product2YYYYYYYYYYYYYYYYYYYYYYYYYYYYYY",
+          "version": "1.0.2"
+        },
+        {
+          "vendor": "Vendor3",
+          "product": "Product3YYYYYYYYYYYYYYYYYYYYYYYYYYYYYY",
+          "version": "1.0.3"
+        },
+        {
+          "vendor": "Vendor4",
+          "product": "Product4YYYYYYYYYYYYYYYYYYYYYYYYYYYYYY",
+          "version": "1.0.4"
+        },
+        {
+          "vendor": "Vendor5",
+          "product": "Product5YYYYYYYYYYYYYYYYYYYYYYYYYYYYYY",
+          "version": "1.0.5"
+        },
+        {
+          "vendor": "Vendor6",
+          "product": "Product6YYYYYYYYYYYYYYYYYYYYYYYYYYYYYY",
+          "version": "1.0.6"
+        },
+        {
+          "vendor": "Vendor7",
+          "product": "Product7YYYYYYYYYYYYYYYYYYYYYYYYYYYYYY",
+          "version": "1.0.7"
+        },
+        {
+          "vendor": "Vendor8",
+          "product": "Product8YYYYYYYYYYYYYYYYYYYYYYYYYYYYYY",
+          "version": "1.0.8"
+        },
+        {
+          "vendor": "Vendor9",
+          "product": "Product9YYYYYYYYYYYYYYYYYYYYYYYYYYYYYY",
+          "version": "1.0.9"
+        },
+        {
+          "vendor": "Vendor10",
+          "product": "Product10YYYYYYYYYYYYYYYYYYYYYYYYYYYYYY",
+          "version": "1.0.10"
+        },
+        {
+          "vendor": "Vendor11",
+          "product": "Product11YYYYYYYYYYYYYYYYYYYYYYYYYYYYYY",
+          "version": "1.0.11"
+        },
+        {
+          "vendor": "Vendor12",
+          "product": "Product12YYYYYYYYYYYYYYYYYYYYYYYYYYYYYY",
+          "version": "1.0.12"
+        },
+        {
+          "vendor": "Vendor13",
+          "product": "Product13YYYYYYYYYYYYYYYYYYYYYYYYYYYYYY",
+          "version": "1.0.13"
+        },
+        {
+          "vendor": "Vendor14",
+          "product": "Product14YYYYYYYYYYYYYYYYYYYYYYYYYYYYYY",
+          "version": "1.0.14"
+        },
+        {
+          "vendor": "Vendor15",
+          "product": "Product15YYYYYYYYYYYYYYYYYYYYYYYYYYYYYY",
+          "version": "1.0.15"
+        },
+        {
+          "vendor": "Vendor16",
+          "product": "Product16YYYYYYYYYYYYYYYYYYYYYYYYYYYYYY",
+          "version": "1.0.16"
+        },
+        {
+          "vendor": "Vendor17",
+          "product": "Product17YYYYYYYYYYYYYYYYYYYYYYYYYYYYYY",
+          "version": "1.0.17"
+        },
+        {
+          "vendor": "Vendor18",
+          "product": "Product18YYYYYYYYYYYYYYYYYYYYYYYYYYYYYY",
+          "version": "1.0.18"
+        },
+        {
+          "vendor": "Vendor19",
+          "product": "Product19YYYYYYYYYYYYYYYYYYYYYYYYYYYYYY",
+          "version": "1.0.19"
+        }
+      ],
+      "labels": [
+        {
+          "value": "LABEL-0-XXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"
+        },
+        {
+          "value": "LABEL-1-XXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"
+        },
+        {
+          "value": "LABEL-2-XXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"
+        },
+        {
+          "value": "LABEL-3-XXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"
+        },
+        {
+          "value": "LABEL-4-XXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"
+        },
+        {
+          "value": "LABEL-5-XXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"
+        },
+        {
+          "value": "LABEL-6-XXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"
+        },
+        {
+          "value": "LABEL-7-XXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"
+        },
+        {
+          "value": "LABEL-8-XXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"
+        },
+        {
+          "value": "LABEL-9-XXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"
+        },
+        {
+          "value": "LABEL-10-XXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"
+        },
+        {
+          "value": "LABEL-11-XXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"
+        },
+        {
+          "value": "LABEL-12-XXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"
+        },
+        {
+          "value": "LABEL-13-XXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"
+        },
+        {
+          "value": "LABEL-14-XXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"
+        },
+        {
+          "value": "LABEL-15-XXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"
+        },
+        {
+          "value": "LABEL-16-XXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"
+        },
+        {
+          "value": "LABEL-17-XXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"
+        },
+        {
+          "value": "LABEL-18-XXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"
+        },
+        {
+          "value": "LABEL-19-XXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"
+        }
+      ]
+    },
+    "extensions": {}
+  }
+}

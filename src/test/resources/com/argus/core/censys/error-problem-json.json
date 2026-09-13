@@ -1,0 +1,8 @@
+{
+  "type": "https://docs.censys.com/errors#invalid-request",
+  "title": "Invalid request parameters",
+  "status": 422,
+  "detail": "organization_id is required for this account tier",
+  "instance": "urn:censys:request:abc123",
+  "errors": []
+}

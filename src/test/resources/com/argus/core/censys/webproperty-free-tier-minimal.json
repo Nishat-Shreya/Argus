@@ -1,0 +1,12 @@
+{
+  "result": {
+    "resource": {
+      "hostname": "minimal.example.com",
+      "port": 443,
+      "endpoints": [
+        {"port": 443, "protocol": "HTTPS"}
+      ]
+    },
+    "extensions": {}
+  }
+}

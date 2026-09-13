@@ -1,0 +1,13 @@
+{
+  "result": {
+    "resource": {
+      "hostname": "blank-ids.example.com",
+      "port": 443,
+      "exposures": [
+        {"name": "Unnamed exposure one", "severity": "medium", "risk_source": "censys"},
+        {"name": "Unnamed exposure two", "severity": "low", "risk_source": "censys"}
+      ]
+    },
+    "extensions": {}
+  }
+}

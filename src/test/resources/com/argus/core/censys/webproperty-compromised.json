@@ -1,0 +1,12 @@
+{
+  "result": {
+    "resource": {
+      "hostname": "compromised.example.com",
+      "port": 443,
+      "compromises": [
+        {"id": "CENSYS-COMPROMISE-1", "name": "Observed serving malware", "severity": "critical", "risk_source": "censys"}
+      ]
+    },
+    "extensions": {}
+  }
+}

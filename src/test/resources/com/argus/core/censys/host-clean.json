@@ -1,0 +1,19 @@
+{
+  "result": {
+    "resource": {
+      "ip": "198.51.100.10",
+      "services": [
+        {"port": 22, "protocol": "SSH"},
+        {"port": 443, "protocol": "HTTPS"}
+      ],
+      "service_count": 2,
+      "location": {"country": "United States", "country_code": "US"},
+      "autonomous_system": {"asn": 64500, "name": "Example Hosting LLC"},
+      "operating_system": {"vendor": "Linux", "product": "Ubuntu"},
+      "labels": [
+        {"value": "cloud"}
+      ]
+    },
+    "extensions": {}
+  }
+}

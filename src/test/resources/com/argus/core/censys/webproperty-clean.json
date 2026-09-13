@@ -1,0 +1,28 @@
+{
+  "result": {
+    "resource": {
+      "hostname": "clean.example.com",
+      "port": 443,
+      "tls": {
+        "version_selected": "tlsv1_3"
+      },
+      "cert": {
+        "fingerprint_sha256": "aa11bb22cc33dd44ee55ff66aa11bb22cc33dd44ee55ff66aa11bb22cc33dd4",
+        "parsed": {
+          "issuer_dn": "C=US, O=Example CA, CN=Example Root CA"
+        }
+      },
+      "software": [
+        {"vendor": "nginx", "product": "nginx", "version": "1.25.3"}
+      ],
+      "labels": [
+        {"value": "web"},
+        {"value": "cdn"}
+      ],
+      "endpoints": [
+        {"port": 443, "protocol": "HTTPS"}
+      ]
+    },
+    "extensions": {}
+  }
+}

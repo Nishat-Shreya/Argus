@@ -1,0 +1,25 @@
+{
+  "result": {
+    "resource": {
+      "ip": "198.51.100.20",
+      "services": [
+        {
+          "port": 80,
+          "protocol": "HTTP",
+          "vulns": [
+            {"id": "CVE-2021-44228", "name": "Log4Shell", "severity": "critical", "risk_source": "cve"}
+          ]
+        },
+        {
+          "port": 8080,
+          "protocol": "HTTP",
+          "exposures": [
+            {"id": "CVE-2022-22965", "name": "Spring4Shell (exposure view)", "severity": "high", "risk_source": "cve"}
+          ]
+        }
+      ],
+      "service_count": 2
+    },
+    "extensions": {}
+  }
+}
