@@ -495,3 +495,74 @@
 .chart-bar.chart-state-closed {
     -fx-bar-fill: -argus-text-muted;
 }
+
+/* P2-11: network graph view (plan section 4/8). Append-only -- the .root token block at the
+   top is pinned by ThemeResourceTest and must not be reordered or edited. */
+
+.graph-root {
+    -fx-background-color: -argus-bg-base;
+}
+
+.graph-canvas {
+    -fx-background-color: -argus-bg-panel;
+    -fx-border-color: -argus-border;
+    -fx-border-width: 1;
+}
+
+.graph-edge {
+    -fx-stroke: -argus-border-strong;
+    -fx-stroke-width: 1;
+}
+
+.graph-node {
+    -fx-stroke: -argus-bg-base;
+    -fx-stroke-width: 1;
+}
+
+.graph-node-target {
+    -fx-fill: -argus-accent;
+}
+
+.graph-node-host {
+    -fx-fill: -argus-text-secondary;
+}
+
+.graph-node-port {
+    -fx-fill: -argus-text-muted;
+}
+
+.graph-node-leaf,
+.graph-type-subdomain {
+    -fx-fill: -argus-text-secondary;
+}
+
+.graph-state-open {
+    -fx-fill: -argus-accent;
+}
+
+.graph-state-filtered {
+    -fx-fill: -argus-warning-text;
+}
+
+.graph-state-closed {
+    -fx-fill: -argus-text-muted;
+}
+
+.graph-node-selected {
+    -fx-stroke: -argus-accent-hover;
+    -fx-stroke-width: 3;
+}
+
+.graph-label {
+    -fx-fill: -argus-text-secondary;
+    -fx-font-size: 10px;
+}
+
+.graph-legend {
+    -fx-spacing: 12;
+}
+
+.graph-legend-swatch {
+    -fx-stroke: -argus-bg-base;
+    -fx-stroke-width: 1;
+}

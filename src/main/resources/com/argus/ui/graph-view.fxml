@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.Group?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.ComboBox?>
+<?import javafx.scene.control.DatePicker?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Pane?>
+<?import javafx.scene.layout.VBox?>
+
+<BorderPane xmlns="http://javafx.com/javafx/21"
+            xmlns:fx="http://javafx.com/fxml/1"
+            fx:controller="com.argus.ui.GraphController"
+            styleClass="graph-root">
+    <top>
+        <VBox fx:id="root" styleClass="toolbar" spacing="10">
+            <HBox spacing="16" alignment="CENTER_LEFT">
+                <VBox spacing="4">
+                    <Label text="network graph" styleClass="card-title"/>
+                    <Label styleClass="card-subtitle" wrapText="true"
+                           text="argus does not resolve dns — an edge means &quot;discovered under this scan target&quot;, not &quot;resolves to&quot;"/>
+                </VBox>
+                <VBox spacing="4">
+                    <Label text="scan" styleClass="card-subtitle"/>
+                    <HBox spacing="8">
+                        <DatePicker fx:id="scanDatePicker"/>
+                        <ComboBox fx:id="scanCombo" prefWidth="220"/>
+                    </HBox>
+                </VBox>
+                <Button fx:id="showButton" text="show" styleClass="primary-button"
+                        onAction="#onShow"/>
+                <Button fx:id="backButton" text="back to dashboard" styleClass="secondary-button"
+                        onAction="#onBack"/>
+            </HBox>
+            <Label fx:id="messageLabel" styleClass="form-error" visible="false" managed="false"
+                   wrapText="true"/>
+            <HBox fx:id="legendBox" styleClass="graph-legend" spacing="12"/>
+        </VBox>
+    </top>
+    <center>
+        <Pane fx:id="canvasPane" styleClass="graph-canvas">
+            <Group fx:id="graphGroup"/>
+        </Pane>
+    </center>
+    <bottom>
+        <HBox alignment="CENTER_LEFT" spacing="10">
+            <padding>
+                <Insets top="8" right="16" bottom="8" left="16"/>
+            </padding>
+            <Label fx:id="hiddenLabel" styleClass="form-hint"/>
+            <Label fx:id="noteLabel" styleClass="form-hint"/>
+            <Label fx:id="detailLabel" styleClass="status-line"/>
+        </HBox>
+    </bottom>
+</BorderPane>

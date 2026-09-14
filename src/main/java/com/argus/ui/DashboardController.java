@@ -47,6 +47,8 @@ public final class DashboardController {
     @FXML
     private Button chartsButton;
     @FXML
+    private Button graphButton;
+    @FXML
     private Circle liveDot;
     @FXML
     private Label messageLabel;
@@ -76,6 +78,9 @@ public final class DashboardController {
 
     /** FX-thread-confined; opens the charts panel. */
     private Runnable onOpenCharts;
+
+    /** FX-thread-confined; opens the network graph panel. */
+    private Runnable onOpenGraph;
 
     @FXML
     @SuppressWarnings("unchecked")
@@ -211,6 +216,18 @@ public final class DashboardController {
     private void onOpenCharts() {
         if (onOpenCharts != null) {
             onOpenCharts.run();
+        }
+    }
+
+    /** Injected by App: opens the network graph panel. */
+    public void setOpenGraphHandler(Runnable handler) {
+        this.onOpenGraph = handler;
+    }
+
+    @FXML
+    private void onOpenGraph() {
+        if (onOpenGraph != null) {
+            onOpenGraph.run();
         }
     }
 

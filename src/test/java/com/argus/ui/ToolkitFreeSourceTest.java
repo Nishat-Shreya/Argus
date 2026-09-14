@@ -49,7 +49,15 @@ class ToolkitFreeSourceTest {
             "DiffValidation.java",
             "ChartData.java",
             "ChartSlice.java",
-            "ChartBar.java");
+            "ChartBar.java",
+            "GraphNodeKind.java",
+            "GraphNode.java",
+            "GraphModel.java",
+            "GraphModels.java",
+            "GraphPoint.java",
+            "GraphLayout.java",
+            "GraphLegendEntry.java",
+            "GraphViewport.java");
 
     @Test
     void noneOfTheOrchestrationClassesImportJavaFx() {
@@ -75,9 +83,9 @@ class ToolkitFreeSourceTest {
     }
 
     @Test
-    void exactlyTwentyEightClassesAreChecked() {
-        assertTrue(TOOLKIT_FREE_CLASSES.size() == 28,
-                "expected 28 toolkit-free classes, found " + TOOLKIT_FREE_CLASSES.size());
+    void exactlyThirtySixClassesAreChecked() {
+        assertTrue(TOOLKIT_FREE_CLASSES.size() == 36,
+                "expected 36 toolkit-free classes, found " + TOOLKIT_FREE_CLASSES.size());
     }
 
     private static boolean violatesImportRule(String line) {

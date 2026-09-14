@@ -51,6 +51,12 @@ public final class App extends Application {
     /** FX-thread-confined: lazily loaded on first open, then retained. */
     private Parent chartsRoot;
 
+    /** FX-thread-confined: assigned on first visit to the network graph panel. */
+    private GraphController graphController;
+
+    /** FX-thread-confined: lazily loaded on first open, then retained. */
+    private Parent graphRoot;
+
     @Override
     public void start(Stage stage) throws Exception {
         FXMLLoader loader = new FXMLLoader(getClass().getResource("login-view.fxml"));
@@ -71,6 +77,7 @@ public final class App extends Application {
                 dashboardController.setOpenKeySettingsHandler(() -> showKeyVault(scene));
                 dashboardController.setOpenDiffHandler(() -> showScanDiff(scene));
                 dashboardController.setOpenChartsHandler(() -> showCharts(scene));
+                dashboardController.setOpenGraphHandler(() -> showGraph(scene));
                 scene.setRoot(dashboardRoot);
             } catch (IOException e) {
                 throw new IllegalStateException("failed to load dashboard-view.fxml", e);
@@ -148,6 +155,28 @@ public final class App extends Application {
         }
         chartsController.refresh();
         scene.setRoot(chartsRoot);
+    }
+
+    /**
+     * Loads {@code graph-view.fxml} once, on first use, and retains it (the
+     * {@link #showCharts(Scene)} shape, plan §1's sixth root swap). Every subsequent open reuses
+     * the same root and just calls {@link GraphController#refresh()}.
+     */
+    private void showGraph(Scene scene) {
+        if (graphRoot == null) {
+            try {
+                FXMLLoader graphLoader =
+                        new FXMLLoader(getClass().getResource("graph-view.fxml"));
+                this.graphRoot = graphLoader.load();
+                this.graphController = graphLoader.getController();
+                graphController.setHistory(ScanHistory.atDefaultLocation());
+                graphController.setOnClose(() -> scene.setRoot(dashboardRoot));
+            } catch (IOException e) {
+                throw new IllegalStateException("failed to load graph-view.fxml", e);
+            }
+        }
+        graphController.refresh();
+        scene.setRoot(graphRoot);
     }
 
     /**

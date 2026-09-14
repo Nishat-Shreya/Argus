@@ -34,6 +34,8 @@
                     onAction="#onOpenDiff"/>
             <Button fx:id="chartsButton" text="charts" styleClass="secondary-button"
                     onAction="#onOpenCharts"/>
+            <Button fx:id="graphButton" text="graph" styleClass="secondary-button"
+                    onAction="#onOpenGraph"/>
             <Circle fx:id="liveDot" radius="5" styleClass="live-dot"/>
             <Label fx:id="messageLabel" styleClass="form-error" visible="false" managed="false"
                    wrapText="true"/>
