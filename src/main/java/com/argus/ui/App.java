@@ -57,6 +57,12 @@ public final class App extends Application {
     /** FX-thread-confined: lazily loaded on first open, then retained. */
     private Parent graphRoot;
 
+    /** FX-thread-confined: assigned on first visit to the timeline panel. */
+    private TimelineController timelineController;
+
+    /** FX-thread-confined: lazily loaded on first open, then retained. */
+    private Parent timelineRoot;
+
     @Override
     public void start(Stage stage) throws Exception {
         FXMLLoader loader = new FXMLLoader(getClass().getResource("login-view.fxml"));
@@ -78,6 +84,7 @@ public final class App extends Application {
                 dashboardController.setOpenDiffHandler(() -> showScanDiff(scene));
                 dashboardController.setOpenChartsHandler(() -> showCharts(scene));
                 dashboardController.setOpenGraphHandler(() -> showGraph(scene));
+                dashboardController.setOpenTimelineHandler(() -> showTimeline(scene));
                 scene.setRoot(dashboardRoot);
             } catch (IOException e) {
                 throw new IllegalStateException("failed to load dashboard-view.fxml", e);
@@ -177,6 +184,28 @@ public final class App extends Application {
         }
         graphController.refresh();
         scene.setRoot(graphRoot);
+    }
+
+    /**
+     * Loads {@code timeline-view.fxml} once, on first use, and retains it (the
+     * {@link #showGraph(Scene)} shape, plan §1's seventh root swap). Every subsequent open
+     * reuses the same root and just calls {@link TimelineController#refresh()}.
+     */
+    private void showTimeline(Scene scene) {
+        if (timelineRoot == null) {
+            try {
+                FXMLLoader timelineLoader =
+                        new FXMLLoader(getClass().getResource("timeline-view.fxml"));
+                this.timelineRoot = timelineLoader.load();
+                this.timelineController = timelineLoader.getController();
+                timelineController.setHistory(ScanHistory.atDefaultLocation());
+                timelineController.setOnClose(() -> scene.setRoot(dashboardRoot));
+            } catch (IOException e) {
+                throw new IllegalStateException("failed to load timeline-view.fxml", e);
+            }
+        }
+        timelineController.refresh();
+        scene.setRoot(timelineRoot);
     }
 
     /**

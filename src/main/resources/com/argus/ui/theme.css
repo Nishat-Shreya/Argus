@@ -566,3 +566,78 @@
     -fx-stroke: -argus-bg-base;
     -fx-stroke-width: 1;
 }
+
+/* P3-01: timeline slider view. Append-only -- the .root token block at the top is pinned by
+   ThemeResourceTest and must not be reordered or edited. */
+
+.timeline-root {
+    -fx-background-color: -argus-bg-base;
+}
+
+.timeline-slider .track {
+    -fx-background-color: -argus-bg-panel-alt;
+    -fx-border-color: -argus-border;
+    -fx-border-width: 1;
+}
+
+.timeline-slider .thumb {
+    -fx-background-color: -argus-accent;
+}
+
+.timeline-slider .axis-tick-mark {
+    -fx-stroke: -argus-border;
+}
+
+.timeline-slider:disabled .track {
+    -fx-background-color: -argus-bg-panel;
+    -fx-border-color: -argus-border;
+}
+
+.timeline-slider:disabled .thumb {
+    -fx-background-color: -argus-text-muted;
+}
+
+.timeline-table {
+    -fx-background-color: -argus-bg-panel;
+    -fx-border-color: -argus-border;
+    -fx-border-width: 1;
+}
+
+.timeline-table .column-header-background {
+    -fx-background-color: -argus-bg-panel-alt;
+}
+
+.timeline-table .column-header {
+    -fx-background-color: -argus-bg-panel-alt;
+    -fx-border-color: -argus-border;
+}
+
+.timeline-table .column-header .label {
+    -fx-text-fill: -argus-text-secondary;
+}
+
+.timeline-table .table-row-cell {
+    -fx-background-color: -argus-bg-panel;
+    -fx-table-cell-border-color: -argus-border;
+}
+
+.timeline-table .table-row-cell:odd {
+    -fx-background-color: -argus-bg-panel-alt;
+}
+
+.timeline-table .table-row-cell:selected {
+    -fx-background-color: -argus-border-strong;
+}
+
+.timeline-table .table-cell {
+    -fx-text-fill: -argus-text-primary;
+}
+
+.timeline-table .placeholder .label {
+    -fx-text-fill: -argus-text-muted;
+}
+
+.timeline-position {
+    -fx-text-fill: -argus-text-primary;
+    -fx-font-family: "Consolas", "Courier New", "Monospaced";
+}

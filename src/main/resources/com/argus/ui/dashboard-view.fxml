@@ -36,6 +36,8 @@
                     onAction="#onOpenCharts"/>
             <Button fx:id="graphButton" text="graph" styleClass="secondary-button"
                     onAction="#onOpenGraph"/>
+            <Button fx:id="timelineButton" text="timeline" styleClass="secondary-button"
+                    onAction="#onOpenTimeline"/>
             <Circle fx:id="liveDot" radius="5" styleClass="live-dot"/>
             <Label fx:id="messageLabel" styleClass="form-error" visible="false" managed="false"
                    wrapText="true"/>

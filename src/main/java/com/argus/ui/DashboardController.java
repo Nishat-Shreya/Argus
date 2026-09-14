@@ -49,6 +49,8 @@ public final class DashboardController {
     @FXML
     private Button graphButton;
     @FXML
+    private Button timelineButton;
+    @FXML
     private Circle liveDot;
     @FXML
     private Label messageLabel;
@@ -81,6 +83,9 @@ public final class DashboardController {
 
     /** FX-thread-confined; opens the network graph panel. */
     private Runnable onOpenGraph;
+
+    /** FX-thread-confined; opens the timeline panel. */
+    private Runnable onOpenTimeline;
 
     @FXML
     @SuppressWarnings("unchecked")
@@ -228,6 +233,18 @@ public final class DashboardController {
     private void onOpenGraph() {
         if (onOpenGraph != null) {
             onOpenGraph.run();
+        }
+    }
+
+    /** Injected by App: opens the timeline panel. */
+    public void setOpenTimelineHandler(Runnable handler) {
+        this.onOpenTimeline = handler;
+    }
+
+    @FXML
+    private void onOpenTimeline() {
+        if (onOpenTimeline != null) {
+            onOpenTimeline.run();
         }
     }
 
