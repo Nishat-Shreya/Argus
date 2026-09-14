@@ -299,3 +299,124 @@
     -fx-border-radius: 3;
     -fx-padding: 2 6;
 }
+
+/* P2-09: scan diff view (plan section 7.9). Append-only -- the .root token block at the top is
+   pinned by ThemeResourceTest and must not be reordered or edited. */
+
+.scan-diff-root {
+    -fx-background-color: -argus-bg-base;
+}
+
+.diff-table {
+    -fx-background-color: -argus-bg-panel;
+    -fx-border-color: -argus-border;
+    -fx-border-width: 1;
+}
+
+.diff-table .column-header-background {
+    -fx-background-color: -argus-bg-panel-alt;
+}
+
+.diff-table .column-header {
+    -fx-background-color: -argus-bg-panel-alt;
+    -fx-border-color: -argus-border;
+}
+
+.diff-table .column-header .label {
+    -fx-text-fill: -argus-text-secondary;
+}
+
+.diff-table .table-row-cell {
+    -fx-background-color: -argus-bg-panel;
+    -fx-table-cell-border-color: -argus-border;
+}
+
+.diff-table .table-row-cell:odd {
+    -fx-background-color: -argus-bg-panel-alt;
+}
+
+.diff-table .table-row-cell:selected {
+    -fx-background-color: -argus-border-strong;
+}
+
+.diff-table .table-cell {
+    -fx-text-fill: -argus-text-primary;
+}
+
+.diff-table .placeholder .label {
+    -fx-text-fill: -argus-text-muted;
+}
+
+.diff-table .table-row-cell.diff-added {
+    -fx-background-color: -argus-success-bg;
+    -fx-table-cell-border-color: -argus-success-border;
+}
+
+.diff-table .table-row-cell.diff-added .table-cell {
+    -fx-text-fill: -argus-accent;
+}
+
+.diff-table .table-row-cell.diff-removed {
+    -fx-background-color: -argus-danger-bg;
+    -fx-table-cell-border-color: -argus-danger-border;
+}
+
+.diff-table .table-row-cell.diff-removed .table-cell {
+    -fx-text-fill: -argus-danger-text;
+}
+
+.diff-table .table-row-cell.diff-changed {
+    -fx-background-color: -argus-warning-bg;
+    -fx-table-cell-border-color: -argus-warning-border;
+}
+
+.diff-table .table-row-cell.diff-changed .table-cell {
+    -fx-text-fill: -argus-warning-text;
+}
+
+.date-picker,
+.combo-box {
+    -fx-background-color: -argus-bg-panel-alt;
+    -fx-border-color: -argus-border;
+    -fx-border-width: 1;
+    -fx-background-radius: 4;
+    -fx-border-radius: 4;
+    -fx-text-fill: -argus-text-primary;
+}
+
+.date-picker .arrow-button,
+.combo-box .arrow-button {
+    -fx-background-color: -argus-bg-panel-alt;
+}
+
+.date-picker:focused,
+.combo-box:focused {
+    -fx-border-color: -argus-border-strong;
+}
+
+.date-picker-popup,
+.combo-box-popup {
+    -fx-background-color: -argus-bg-panel;
+}
+
+.date-picker-popup .month-year-pane {
+    -fx-background-color: -argus-bg-panel-alt;
+}
+
+.date-picker-popup .day-cell {
+    -fx-background-color: -argus-bg-panel;
+    -fx-text-fill: -argus-text-primary;
+}
+
+.date-picker-popup .day-cell:disabled {
+    -fx-text-fill: -argus-text-muted;
+}
+
+.combo-box-popup .list-cell {
+    -fx-background-color: -argus-bg-panel;
+    -fx-text-fill: -argus-text-primary;
+}
+
+.combo-box-popup .list-cell:filled:selected {
+    -fx-background-color: -argus-border-strong;
+}

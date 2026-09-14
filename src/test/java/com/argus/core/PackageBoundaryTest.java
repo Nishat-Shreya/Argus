@@ -57,6 +57,45 @@ class PackageBoundaryTest {
     }
 
     @Test
+    void uiNamesNoDbTypeAtAll() {
+        // P2-09 §0.3.1: closes the hole in uiDoesNotImportDb() above, which is anchored on the
+        // literal word "import" and so misses a fully-qualified reference written straight into
+        // code (`com.argus.db.FindingRecord r = ...;`). This scans every production ui source
+        // LINE -- imports or not, comments included -- for the literal package prefix, with zero
+        // exceptions: prose that must mention the layer writes "the db layer", never the package
+        // name.
+        for (Path javaFile : javaFilesUnder(UI)) {
+            List<String> lines;
+            try {
+                lines = Files.readAllLines(javaFile);
+            } catch (IOException e) {
+                throw new UncheckedIOException(e);
+            }
+            for (String line : lines) {
+                assertFalse(namesDbType(line),
+                        javaFile + " names a com.argus.db type -> " + line.trim());
+            }
+        }
+    }
+
+    @Test
+    void namesDbTypeFlagsASyntheticFullyQualifiedReference() {
+        // The positive control, the importRuleFlags* shape: proves the helper actually catches
+        // the hole it exists to close, not just an import-style line.
+        assertTrue(namesDbType("com.argus.db.FindingRecord r = diff.added().get(0);"));
+        assertTrue(namesDbType("        // see com.argus.db.ScanStatus for the vocabulary"));
+        assertFalse(namesDbType("this mentions the db layer in prose, not the package"));
+        assertFalse(namesDbType(" * {@code com.argus.db}'s row types"));
+    }
+
+    /** True when {@code line} contains the literal {@code com.argus.db.} package prefix
+     *  anywhere -- not anchored to an import declaration, and not fooled by a mention of
+     *  {@code com.argus.db} with no trailing dot (e.g. inside a closing brace or possessive). */
+    static boolean namesDbType(String line) {
+        return line.contains("com.argus.db.");
+    }
+
+    @Test
     void sourceTreeIsWhereWeThinkItIs() {
         assertTrue(Files.isDirectory(Path.of("src/main/java")),
                 "src/main/java not found from working directory "

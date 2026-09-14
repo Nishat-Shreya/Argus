@@ -30,6 +30,8 @@
                     onAction="#onCancel" disable="true"/>
             <Button fx:id="keysButton" text="api keys" styleClass="secondary-button"
                     onAction="#onOpenKeys"/>
+            <Button fx:id="diffButton" text="diff" styleClass="secondary-button"
+                    onAction="#onOpenDiff"/>
             <Circle fx:id="liveDot" radius="5" styleClass="live-dot"/>
             <Label fx:id="messageLabel" styleClass="form-error" visible="false" managed="false"
                    wrapText="true"/>

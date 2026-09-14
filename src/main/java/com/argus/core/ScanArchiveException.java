@@ -13,4 +13,9 @@ public class ScanArchiveException extends Exception {
     public ScanArchiveException(String message, Throwable cause) {
         super(message, cause);
     }
+
+    /** For a failure with no wrapped cause — e.g. "no scan with id N" (plan §3.4). */
+    public ScanArchiveException(String message) {
+        super(message);
+    }
 }

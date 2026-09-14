@@ -1,5 +1,6 @@
 package com.argus.ui;
 
+import com.argus.core.ScanHistory;
 import com.argus.core.Vault;
 import com.argus.core.VaultStore;
 import java.io.IOException;
@@ -38,6 +39,12 @@ public final class App extends Application {
     /** FX-thread-confined: lazily loaded on first open, then retained. */
     private Parent keyVaultRoot;
 
+    /** FX-thread-confined: assigned on first visit to the scan diff panel. */
+    private ScanDiffController scanDiffController;
+
+    /** FX-thread-confined: lazily loaded on first open, then retained. */
+    private Parent scanDiffRoot;
+
     @Override
     public void start(Stage stage) throws Exception {
         FXMLLoader loader = new FXMLLoader(getClass().getResource("login-view.fxml"));
@@ -56,6 +63,7 @@ public final class App extends Application {
                 this.dashboardRoot = dashboardLoader.load();
                 this.dashboardController = dashboardLoader.getController();
                 dashboardController.setOpenKeySettingsHandler(() -> showKeyVault(scene));
+                dashboardController.setOpenDiffHandler(() -> showScanDiff(scene));
                 scene.setRoot(dashboardRoot);
             } catch (IOException e) {
                 throw new IllegalStateException("failed to load dashboard-view.fxml", e);
@@ -89,6 +97,28 @@ public final class App extends Application {
         }
         keyVaultController.refresh();
         scene.setRoot(keyVaultRoot);
+    }
+
+    /**
+     * Loads {@code scan-diff-view.fxml} once, on first use, and retains it (the
+     * {@link #showKeyVault(Scene)} shape, plan §4.5's fourth root swap). Every subsequent open
+     * reuses the same root and just calls {@link ScanDiffController#refresh()}.
+     */
+    private void showScanDiff(Scene scene) {
+        if (scanDiffRoot == null) {
+            try {
+                FXMLLoader scanDiffLoader =
+                        new FXMLLoader(getClass().getResource("scan-diff-view.fxml"));
+                this.scanDiffRoot = scanDiffLoader.load();
+                this.scanDiffController = scanDiffLoader.getController();
+                scanDiffController.setHistory(ScanHistory.atDefaultLocation());
+                scanDiffController.setOnClose(() -> scene.setRoot(dashboardRoot));
+            } catch (IOException e) {
+                throw new IllegalStateException("failed to load scan-diff-view.fxml", e);
+            }
+        }
+        scanDiffController.refresh();
+        scene.setRoot(scanDiffRoot);
     }
 
     /**

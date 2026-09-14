@@ -43,6 +43,8 @@ public final class DashboardController {
     @FXML
     private Button keysButton;
     @FXML
+    private Button diffButton;
+    @FXML
     private Circle liveDot;
     @FXML
     private Label messageLabel;
@@ -66,6 +68,9 @@ public final class DashboardController {
 
     /** FX-thread-confined; opens the key-vault panel. Never a Vault here (P1-06's decision). */
     private Runnable onOpenKeySettings;
+
+    /** FX-thread-confined; opens the scan diff panel. */
+    private Runnable onOpenDiff;
 
     @FXML
     @SuppressWarnings("unchecked")
@@ -177,6 +182,18 @@ public final class DashboardController {
     private void onOpenKeys() {
         if (onOpenKeySettings != null) {
             onOpenKeySettings.run();
+        }
+    }
+
+    /** Injected by App: opens the scan diff panel. */
+    public void setOpenDiffHandler(Runnable handler) {
+        this.onOpenDiff = handler;
+    }
+
+    @FXML
+    private void onOpenDiff() {
+        if (onOpenDiff != null) {
+            onOpenDiff.run();
         }
     }
 
