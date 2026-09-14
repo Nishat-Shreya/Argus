@@ -46,7 +46,10 @@ class ToolkitFreeSourceTest {
             "DiffRows.java",
             "ScanChoice.java",
             "ScanChoices.java",
-            "DiffValidation.java");
+            "DiffValidation.java",
+            "ChartData.java",
+            "ChartSlice.java",
+            "ChartBar.java");
 
     @Test
     void noneOfTheOrchestrationClassesImportJavaFx() {
@@ -72,9 +75,9 @@ class ToolkitFreeSourceTest {
     }
 
     @Test
-    void exactlyTwentyFiveClassesAreChecked() {
-        assertTrue(TOOLKIT_FREE_CLASSES.size() == 25,
-                "expected 25 toolkit-free classes, found " + TOOLKIT_FREE_CLASSES.size());
+    void exactlyTwentyEightClassesAreChecked() {
+        assertTrue(TOOLKIT_FREE_CLASSES.size() == 28,
+                "expected 28 toolkit-free classes, found " + TOOLKIT_FREE_CLASSES.size());
     }
 
     private static boolean violatesImportRule(String line) {

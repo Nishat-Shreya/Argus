@@ -45,6 +45,8 @@ public final class DashboardController {
     @FXML
     private Button diffButton;
     @FXML
+    private Button chartsButton;
+    @FXML
     private Circle liveDot;
     @FXML
     private Label messageLabel;
@@ -71,6 +73,9 @@ public final class DashboardController {
 
     /** FX-thread-confined; opens the scan diff panel. */
     private Runnable onOpenDiff;
+
+    /** FX-thread-confined; opens the charts panel. */
+    private Runnable onOpenCharts;
 
     @FXML
     @SuppressWarnings("unchecked")
@@ -194,6 +199,18 @@ public final class DashboardController {
     private void onOpenDiff() {
         if (onOpenDiff != null) {
             onOpenDiff.run();
+        }
+    }
+
+    /** Injected by App: opens the charts panel. */
+    public void setOpenChartsHandler(Runnable handler) {
+        this.onOpenCharts = handler;
+    }
+
+    @FXML
+    private void onOpenCharts() {
+        if (onOpenCharts != null) {
+            onOpenCharts.run();
         }
     }
 

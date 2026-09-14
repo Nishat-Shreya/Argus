@@ -45,6 +45,12 @@ public final class App extends Application {
     /** FX-thread-confined: lazily loaded on first open, then retained. */
     private Parent scanDiffRoot;
 
+    /** FX-thread-confined: assigned on first visit to the charts panel. */
+    private ChartsController chartsController;
+
+    /** FX-thread-confined: lazily loaded on first open, then retained. */
+    private Parent chartsRoot;
+
     @Override
     public void start(Stage stage) throws Exception {
         FXMLLoader loader = new FXMLLoader(getClass().getResource("login-view.fxml"));
@@ -64,6 +70,7 @@ public final class App extends Application {
                 this.dashboardController = dashboardLoader.getController();
                 dashboardController.setOpenKeySettingsHandler(() -> showKeyVault(scene));
                 dashboardController.setOpenDiffHandler(() -> showScanDiff(scene));
+                dashboardController.setOpenChartsHandler(() -> showCharts(scene));
                 scene.setRoot(dashboardRoot);
             } catch (IOException e) {
                 throw new IllegalStateException("failed to load dashboard-view.fxml", e);
@@ -119,6 +126,28 @@ public final class App extends Application {
         }
         scanDiffController.refresh();
         scene.setRoot(scanDiffRoot);
+    }
+
+    /**
+     * Loads {@code charts-view.fxml} once, on first use, and retains it (the
+     * {@link #showScanDiff(Scene)} shape, plan §1's fifth root swap). Every subsequent open
+     * reuses the same root and just calls {@link ChartsController#refresh()}.
+     */
+    private void showCharts(Scene scene) {
+        if (chartsRoot == null) {
+            try {
+                FXMLLoader chartsLoader =
+                        new FXMLLoader(getClass().getResource("charts-view.fxml"));
+                this.chartsRoot = chartsLoader.load();
+                this.chartsController = chartsLoader.getController();
+                chartsController.setHistory(ScanHistory.atDefaultLocation());
+                chartsController.setOnClose(() -> scene.setRoot(dashboardRoot));
+            } catch (IOException e) {
+                throw new IllegalStateException("failed to load charts-view.fxml", e);
+            }
+        }
+        chartsController.refresh();
+        scene.setRoot(chartsRoot);
     }
 
     /**

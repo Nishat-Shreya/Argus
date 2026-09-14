@@ -1,11 +1,13 @@
 package com.argus.core;
 
 import com.argus.db.Database;
+import com.argus.db.FindingRecord;
 import com.argus.db.PersistenceException;
 import com.argus.db.ScanRecord;
 import com.argus.db.ScanRepository;
 import com.argus.db.ScanSession;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -70,6 +72,27 @@ public final class ScanHistory {
                     ScanSummaries.of(current.scan()), ScanDiffReports.of(diff));
         } catch (PersistenceException e) {
             throw new ScanArchiveException("comparing scans in " + databaseFile, e);
+        }
+    }
+
+    /**
+     * BLOCKING. Every finding of one scan, projected. Ordering follows the persistence layer's
+     * own row order; callers that need a specific order impose it themselves.
+     *
+     * @throws ScanArchiveException on any persistence failure, or if the id is absent
+     */
+    public List<FindingSnapshot> listFindings(long scanId) throws ScanArchiveException {
+        try {
+            Database database = Database.open(databaseFile);
+            ScanRepository repository = new ScanRepository(database);
+            ScanSession session = load(repository, scanId);
+            List<FindingSnapshot> snapshots = new ArrayList<>();
+            for (FindingRecord record : session.findings()) {
+                snapshots.add(ScanDiffReports.of(record));
+            }
+            return List.copyOf(snapshots);
+        } catch (PersistenceException e) {
+            throw new ScanArchiveException("listing findings in " + databaseFile, e);
         }
     }
 

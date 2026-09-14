@@ -420,3 +420,78 @@
 .combo-box-popup .list-cell:filled:selected {
     -fx-background-color: -argus-border-strong;
 }
+
+/* P2-10: charts view (plan section 4.3-4.5, 8). Append-only -- the .root token block at the
+   top is pinned by ThemeResourceTest and must not be reordered or edited. */
+
+.charts-root {
+    -fx-background-color: -argus-bg-base;
+}
+
+.state-pie,
+.port-bar-chart {
+    -fx-background-color: -argus-bg-panel;
+    -fx-border-color: -argus-border;
+    -fx-border-width: 1;
+}
+
+.chart-title {
+    -fx-text-fill: -argus-text-primary;
+}
+
+.chart-plot-background {
+    -fx-background-color: -argus-bg-panel-alt;
+}
+
+.chart-vertical-grid-lines {
+    -fx-stroke: -argus-border;
+}
+
+.chart-horizontal-grid-lines {
+    -fx-stroke: -argus-border;
+}
+
+.axis {
+    -fx-tick-label-fill: -argus-text-secondary;
+    -fx-text-fill: -argus-text-secondary;
+}
+
+.axis .axis-label {
+    -fx-text-fill: -argus-text-secondary;
+}
+
+.axis-tick-mark {
+    -fx-stroke: -argus-border;
+}
+
+.chart-pie-label {
+    -fx-fill: -argus-text-primary;
+}
+
+.chart-pie-label-line {
+    -fx-stroke: -argus-text-muted;
+}
+
+.chart-pie.chart-state-open {
+    -fx-pie-color: -argus-accent;
+}
+
+.chart-bar.chart-state-open {
+    -fx-bar-fill: -argus-accent;
+}
+
+.chart-pie.chart-state-filtered {
+    -fx-pie-color: -argus-warning-text;
+}
+
+.chart-bar.chart-state-filtered {
+    -fx-bar-fill: -argus-warning-text;
+}
+
+.chart-pie.chart-state-closed {
+    -fx-pie-color: -argus-text-muted;
+}
+
+.chart-bar.chart-state-closed {
+    -fx-bar-fill: -argus-text-muted;
+}
