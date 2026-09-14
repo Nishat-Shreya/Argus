@@ -23,6 +23,7 @@ class PackageBoundaryTest {
 
     private static final Path CORE = Path.of("src/main/java/com/argus/core");
     private static final Path DB = Path.of("src/main/java/com/argus/db");
+    private static final Path UI = Path.of("src/main/java/com/argus/ui");
 
     @Test
     void coreHasNoJavaFxImports() {
@@ -43,6 +44,16 @@ class PackageBoundaryTest {
     @Test
     void dbHasNoJavaFxImports() {
         assertNoImport(DB, "javafx.");
+    }
+
+    @Test
+    void uiDoesNotImportDb() {
+        // P1-09 §0.2 ruling: ui -> db is neither permitted nor forbidden by invariant 1's text,
+        // but the design choice made here is that the whole core -> db mapping and the save call
+        // live in core; ui sees only core-native types plus a db-generated primary key as a
+        // plain Long. Scoped to PRODUCTION ui sources only -- ui *tests* may import db (the
+        // end-to-end round-trip test deliberately does).
+        assertNoImport(UI, "com.argus.db.");
     }
 
     @Test

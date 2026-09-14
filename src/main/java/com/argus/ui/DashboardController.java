@@ -1,5 +1,6 @@
 package com.argus.ui;
 
+import com.argus.core.ScanArchive;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -116,7 +117,7 @@ public final class DashboardController {
             public void onScanFinished(ScanOutcome outcome) {
                 Platform.runLater(() -> onScanFinishedOnFxThread(outcome));
             }
-        });
+        }, new DefaultScanJobFactory(), ScanArchive.atDefaultLocation()::save);
     }
 
     @FXML
@@ -198,8 +199,11 @@ public final class DashboardController {
             case COMPLETED_WITH_ERRORS -> "completed with errors";
             case CANCELLED -> "cancelled";
         };
+        String savedWord = outcome.saved()
+                ? "saved #" + outcome.savedScanId()
+                : "NOT SAVED — see log";
         appendLog("scan finished · " + outcome.findingsDelivered() + " findings · " + resultWord);
-        statusLine.setText(resultWord);
+        statusLine.setText(resultWord + " · " + savedWord);
     }
 
     private void updateWorkerRow(WorkerStatus status) {

@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import com.argus.core.ScanCompletion;
 import com.argus.core.Subdomain;
 import java.util.ArrayList;
 import java.util.List;
@@ -72,7 +73,7 @@ class ScanCoordinatorCancelTest {
         for (FindingRow row : delivered) {
             assertTrue(expected.contains(row), "unexpected finding: " + row);
         }
-        assertEquals(ScanOutcome.Result.CANCELLED, listener.outcome().result());
+        assertEquals(ScanCompletion.CANCELLED, listener.outcome().result());
     }
 
     @Test
@@ -139,7 +140,7 @@ class ScanCoordinatorCancelTest {
         ScanCoordinatorTest.awaitPoolTerminatedAndThreadsFinished(coordinator);
         long finishedCount = listener.events().stream().filter(e -> e.startsWith("finished:")).count();
         assertEquals(1, finishedCount);
-        assertEquals(ScanOutcome.Result.CANCELLED, listener.outcome().result());
+        assertEquals(ScanCompletion.CANCELLED, listener.outcome().result());
     }
 
     @Test
@@ -153,7 +154,7 @@ class ScanCoordinatorCancelTest {
         coordinator.start(PLAN);
         assertTrue(listener.finishedLatch().await(25, TimeUnit.SECONDS));
         assertEquals(5, listener.findings().size());
-        assertEquals(ScanOutcome.Result.COMPLETED, listener.outcome().result());
+        assertEquals(ScanCompletion.COMPLETED, listener.outcome().result());
     }
 
     @Test

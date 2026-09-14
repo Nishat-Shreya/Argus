@@ -37,6 +37,7 @@ class ToolkitFreeSourceTest {
             "SubdomainScanJob.java",
             "DefaultScanJobFactory.java",
             "ScanCoordinator.java",
+            "ScanSaver.java",
             "ApiKeySource.java",
             "ApiKeyRow.java",
             "ApiKeyRows.java",
@@ -66,9 +67,9 @@ class ToolkitFreeSourceTest {
     }
 
     @Test
-    void exactlyNineteenClassesAreChecked() {
-        assertTrue(TOOLKIT_FREE_CLASSES.size() == 19,
-                "expected 19 toolkit-free classes, found " + TOOLKIT_FREE_CLASSES.size());
+    void exactlyTwentyClassesAreChecked() {
+        assertTrue(TOOLKIT_FREE_CLASSES.size() == 20,
+                "expected 20 toolkit-free classes, found " + TOOLKIT_FREE_CLASSES.size());
     }
 
     private static boolean violatesImportRule(String line) {

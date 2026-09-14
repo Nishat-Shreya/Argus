@@ -1,8 +1,12 @@
 package com.argus.ui;
 
+import com.argus.core.ScanArchiveException;
+import com.argus.core.ScanCompletion;
 import com.argus.core.ScanFeed;
 import com.argus.core.ScanPipeline;
+import com.argus.core.ScanRun;
 import java.lang.System.Logger.Level;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -44,6 +48,7 @@ final class ScanCoordinator implements AutoCloseable {
 
     private final ScanEventListener listener;
     private final ScanJobFactory factory;
+    private final ScanSaver saver;
     private final int pipelineCapacity;
     private final int batchLimit;
 
@@ -68,19 +73,31 @@ final class ScanCoordinator implements AutoCloseable {
     private int completedJobs;                                                // @GuardedBy("lock")
     private int failedJobs;                                                   // @GuardedBy("lock")
     private int findingsDelivered;                                            // @GuardedBy("lock")
+    private final List<Object> collectedFindings = new ArrayList<>();         // @GuardedBy("lock")
+    private Instant scanStartedAt;                                            // @GuardedBy("lock")
 
     ScanCoordinator(ScanEventListener listener) {
         this(listener, new DefaultScanJobFactory());
     }
 
     ScanCoordinator(ScanEventListener listener, ScanJobFactory factory) {
-        this(listener, factory, ScanPipeline.DEFAULT_CAPACITY, BATCH_LIMIT);
+        this(listener, factory, ScanSaver.none());
+    }
+
+    ScanCoordinator(ScanEventListener listener, ScanJobFactory factory, ScanSaver saver) {
+        this(listener, factory, saver, ScanPipeline.DEFAULT_CAPACITY, BATCH_LIMIT);
     }
 
     ScanCoordinator(ScanEventListener listener, ScanJobFactory factory, int pipelineCapacity,
             int batchLimit) {
+        this(listener, factory, ScanSaver.none(), pipelineCapacity, batchLimit);
+    }
+
+    ScanCoordinator(ScanEventListener listener, ScanJobFactory factory, ScanSaver saver,
+            int pipelineCapacity, int batchLimit) {
         this.listener = Objects.requireNonNull(listener, "listener");
         this.factory = Objects.requireNonNull(factory, "factory");
+        this.saver = Objects.requireNonNull(saver, "saver");
         this.pipelineCapacity = pipelineCapacity;
         this.batchLimit = batchLimit;
     }
@@ -111,6 +128,8 @@ final class ScanCoordinator implements AutoCloseable {
             completedJobs = 0;
             failedJobs = 0;
             findingsDelivered = 0;
+            collectedFindings.clear();
+            scanStartedAt = Instant.now();
             newPipeline = new ScanPipeline<>(pipelineCapacity);
             pipeline = newPipeline;
             newPauseGate = new PauseGate();
@@ -290,6 +309,7 @@ final class ScanCoordinator implements AutoCloseable {
                 ScanProgress snapshot;
                 synchronized (lock) {
                     findingsDelivered += rows.size();
+                    collectedFindings.addAll(raw);
                     snapshot = progressSnapshot();
                 }
                 listener.onFindings(rows);          // listener wraps this in ONE runLater
@@ -389,22 +409,45 @@ final class ScanCoordinator implements AutoCloseable {
         // construction rather than by timing (T-S5).
         listener.onProgress(progressSnapshotSafe());
 
-        ScanOutcome outcome;
+        // 6. Derive the completion and build the ScanRun under lock; the run is immutable once
+        // built, so it is safely published to the saver with no further locking.
+        ScanRun run;
+        int failedJobsSnapshot;
         synchronized (lock) {
-            ScanOutcome.Result result;
+            ScanCompletion completion;
             if (state == RunState.STOPPING) {
-                result = ScanOutcome.Result.CANCELLED;
+                completion = ScanCompletion.CANCELLED;
             } else if (failedJobs > 0) {
-                result = ScanOutcome.Result.COMPLETED_WITH_ERRORS;
+                completion = ScanCompletion.COMPLETED_WITH_ERRORS;
             } else {
-                result = ScanOutcome.Result.COMPLETED;
+                completion = ScanCompletion.COMPLETED;
             }
-            outcome = new ScanOutcome(result, findingsDelivered, failedJobs);
+            failedJobsSnapshot = failedJobs;
+            run = new ScanRun(plan.target(), scanStartedAt, Instant.now(), completion,
+                    List.copyOf(collectedFindings));
+        }
+
+        // 7. Save, blocking, with NO LOCK HELD -- holding the monitor across file I/O + SQL
+        // would block a concurrent cancel()/pause() for the duration of a disk write.
+        Long savedScanId;
+        try {
+            savedScanId = saver.save(run);
+            listener.onLog("scan saved · id " + savedScanId);
+        } catch (ScanArchiveException e) {
+            savedScanId = null;
+            listener.onLog("scan NOT saved · " + e.getMessage());
+        }
+
+        // 8. Only now does the coordinator become available for the next scan -- so start()
+        // cannot clear collectedFindings while it is still being written.
+        synchronized (lock) {
             if (state != RunState.CLOSED) {
-                state = RunState.IDLE;           // 5. ready for the next scan
+                state = RunState.IDLE;
             }
         }
-        listener.onScanFinished(outcome);
+
+        // 9. Still exactly once, still last.
+        listener.onScanFinished(new ScanOutcome(run, failedJobsSnapshot, savedScanId));
     }
 
     /**

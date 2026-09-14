@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import com.argus.core.ScanCompletion;
 import com.argus.core.ScanPipeline;
 import com.argus.core.Subdomain;
 import java.util.ArrayList;
@@ -172,7 +173,7 @@ class ScanCoordinatorTest {
         assertTrue(listener.finishedLatch().await(25, TimeUnit.SECONDS));
 
         ScanOutcome outcome = listener.outcome();
-        assertEquals(ScanOutcome.Result.COMPLETED, outcome.result());
+        assertEquals(ScanCompletion.COMPLETED, outcome.result());
         assertEquals(0, outcome.failedJobs());
     }
 
@@ -350,6 +351,6 @@ class ScanCoordinatorTest {
         WorkerStatus last = statuses.get(statuses.size() - 1);
         assertEquals(WorkerStatus.State.DONE, last.state());
         assertEquals(0, last.findingsPublished());
-        assertEquals(ScanOutcome.Result.COMPLETED, listener.outcome().result());
+        assertEquals(ScanCompletion.COMPLETED, listener.outcome().result());
     }
 }

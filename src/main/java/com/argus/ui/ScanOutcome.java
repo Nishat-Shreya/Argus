@@ -1,6 +1,19 @@
 package com.argus.ui;
 
-record ScanOutcome(Result result, int findingsDelivered, int failedJobs) {
+import com.argus.core.ScanCompletion;
+import com.argus.core.ScanRun;
 
-    enum Result { COMPLETED, COMPLETED_WITH_ERRORS, CANCELLED }
+record ScanOutcome(ScanRun run, int failedJobs, Long savedScanId) {
+
+    ScanCompletion result() {
+        return run.completion();
+    }
+
+    int findingsDelivered() {
+        return run.findings().size();
+    }
+
+    boolean saved() {
+        return savedScanId != null;
+    }
 }

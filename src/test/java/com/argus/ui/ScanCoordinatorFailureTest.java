@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import com.argus.core.ScanCompletion;
 import com.argus.core.Subdomain;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
@@ -70,7 +71,7 @@ class ScanCoordinatorFailureTest {
         assertTrue(listener.finishedLatch().await(25, TimeUnit.SECONDS));
 
         ScanOutcome outcome = listener.outcome();
-        assertEquals(ScanOutcome.Result.COMPLETED_WITH_ERRORS, outcome.result());
+        assertEquals(ScanCompletion.COMPLETED_WITH_ERRORS, outcome.result());
         assertEquals(1, outcome.failedJobs());
     }
 
