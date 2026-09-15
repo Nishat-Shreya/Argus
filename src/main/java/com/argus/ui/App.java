@@ -3,8 +3,10 @@ package com.argus.ui;
 import com.argus.core.ScanHistory;
 import com.argus.core.Vault;
 import com.argus.core.VaultStore;
+import com.argus.core.WebhookSender;
 import java.io.IOException;
 import java.lang.System.Logger.Level;
+import java.util.List;
 import javafx.application.Application;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
@@ -33,6 +35,18 @@ public final class App extends Application {
     /** FX-thread-confined: created once, after unlock, and closed by {@link #stop()} before the
      *  vault (P3-02 §3.7). Defaults to the no-op fallback so a shutdown before unlock is safe. */
     private DesktopNotifier desktopNotifier = DesktopNotifier.disabled();
+
+    /** FX-thread-confined: created once, after unlock, and closed by {@link #stop()} before the
+     *  vault (P3-03 §3.7) — the webhook worker inside it may resolve its endpoint from the
+     *  vault, so the pool must be joined before the vault is closed. Defaults to the no-op
+     *  fallback so a shutdown before unlock is safe. */
+    private AlertChannel alertChannels = AlertChannels.none();
+
+    /** FX-thread-confined: assigned on first visit to the notifications settings panel. */
+    private NotificationSettingsController notificationSettingsController;
+
+    /** FX-thread-confined: lazily loaded on first open, then retained. */
+    private Parent notificationSettingsRoot;
 
     /** FX-thread-confined: retained so returning from the key vault is a RESTORE, not a reload. */
     private Parent dashboardRoot;
@@ -89,8 +103,14 @@ public final class App extends Application {
                 dashboardController.setOpenChartsHandler(() -> showCharts(scene));
                 dashboardController.setOpenGraphHandler(() -> showGraph(scene));
                 dashboardController.setOpenTimelineHandler(() -> showTimeline(scene));
+                dashboardController.setOpenNotificationSettingsHandler(
+                        () -> showNotificationSettings(scene));
                 this.desktopNotifier = DesktopNotifiers.create();
-                dashboardController.setDesktopNotifier(desktopNotifier);
+                this.alertChannels = AlertChannels.of(List.of(
+                        new DesktopAlertChannel(desktopNotifier),
+                        new WebhookAlertChannel(WebhookSettings.fromVault(unlockedVault),
+                                new WebhookSender())));
+                dashboardController.setAlertChannel(alertChannels);
                 scene.setRoot(dashboardRoot);
             } catch (IOException e) {
                 throw new IllegalStateException("failed to load dashboard-view.fxml", e);
@@ -215,20 +235,47 @@ public final class App extends Application {
     }
 
     /**
+     * Loads {@code notification-settings-view.fxml} once, on first use, and retains it (the
+     * {@link #showTimeline(Scene)} shape, plan §3.7's eighth root swap). Every subsequent open
+     * reuses the same root and just calls {@link NotificationSettingsController#refresh()}.
+     */
+    private void showNotificationSettings(Scene scene) {
+        if (notificationSettingsRoot == null) {
+            try {
+                FXMLLoader notificationSettingsLoader = new FXMLLoader(
+                        getClass().getResource("notification-settings-view.fxml"));
+                this.notificationSettingsRoot = notificationSettingsLoader.load();
+                this.notificationSettingsController = notificationSettingsLoader.getController();
+                notificationSettingsController.setVault(vault);
+                notificationSettingsController.setOnClose(() -> scene.setRoot(dashboardRoot));
+            } catch (IOException e) {
+                throw new IllegalStateException(
+                        "failed to load notification-settings-view.fxml", e);
+            }
+        }
+        notificationSettingsController.refresh();
+        scene.setRoot(notificationSettingsRoot);
+    }
+
+    /**
      * JavaFX shutdown hook. Shuts the dashboard's scan down first (invariant 6 — P0-02's
-     * reservation of this method for the scan {@code ExecutorService}), then releases the
+     * reservation of this method for the scan {@code ExecutorService}), then joins the webhook
+     * worker pool (P3-03 §3.7 — a queued webhook delivery may resolve its endpoint from the
+     * vault, so this pool must be gone before the vault is closed), then releases the
      * desktop-notifier's OS resource (P3-02 §3.7 — the tray icon must be gone before the FX
      * toolkit winds down, or AWT's non-daemon helper threads can keep the JVM alive, JDK-6412791;
      * this is {@code App.stop()}, not a shutdown hook, for the reason JDK-8042114 warns about),
      * then closes the vault, if one was ever unlocked — the zeroization-at-app-close tie-in
-     * (plan §4.6). Scan first, notifier second, vault third: stop the work, release the OS
-     * resource, then release the credential.
+     * (plan §4.6). Scan first, alert channels second, notifier third, vault fourth: stop the
+     * work, join anything that might still touch the vault, release the OS resource, then
+     * release the credential.
      */
     @Override
     public void stop() {
         if (dashboardController != null) {
             dashboardController.shutdown();
         }
+        alertChannels.close();
         desktopNotifier.close();
         if (vault != null) {
             try {

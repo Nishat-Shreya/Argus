@@ -1,28 +1,32 @@
 package com.argus.ui;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.List;
+import java.util.stream.Stream;
 import org.junit.jupiter.api.Test;
 
 /**
- * Section 6.5 (W1-W3): reflective + source-scan guards on the modified {@code
+ * Section 6.5 / 6.11 (W1-W7): reflective + source-scan guards on the modified {@code
  * DashboardController} and {@code App}.
  */
 class NotificationWiringTest {
 
     @Test
-    void w1DashboardControllerDeclaresNonVolatileNotifierAndHistoryFields() {
-        Field notifierField = findFieldOfType(DashboardController.class, DesktopNotifier.class);
-        assertTrue(notifierField != null,
-                "DashboardController must declare a DesktopNotifier field");
-        assertFalse(Modifier.isStatic(notifierField.getModifiers()));
-        assertFalse(Modifier.isVolatile(notifierField.getModifiers()));
+    void w1DashboardControllerDeclaresNonVolatileAlertChannelAndHistoryFields() {
+        Field channelField = findFieldOfType(DashboardController.class, AlertChannel.class);
+        assertTrue(channelField != null,
+                "DashboardController must declare an AlertChannel field");
+        assertFalse(Modifier.isStatic(channelField.getModifiers()));
+        assertFalse(Modifier.isVolatile(channelField.getModifiers()));
 
         Field historyField = findFieldOfType(DashboardController.class,
                 com.argus.core.ScanHistory.class);
@@ -81,6 +85,67 @@ class NotificationWiringTest {
                 "show() must check closed before reaching install(), so a Task callback "
                         + "landing on the FX thread after App.stop() -> desktopNotifier.close() "
                         + "can never reinstall a tray icon and re-trigger JDK-6412791");
+    }
+
+    @Test
+    void w5AppClosesAlertChannelsBeforeVaultCloseAndAfterDashboardShutdown() throws IOException {
+        String source = readSource(Path.of("src/main/java/com/argus/ui/App.java"));
+        int shutdownIndex = source.indexOf("dashboardController.shutdown()");
+        int alertChannelsCloseIndex = source.indexOf("alertChannels.close()");
+        int vaultCloseIndex = source.lastIndexOf("vault.close()");
+
+        assertTrue(shutdownIndex >= 0, "App.stop() must call dashboardController.shutdown()");
+        assertTrue(alertChannelsCloseIndex >= 0, "App.stop() must call alertChannels.close()");
+        assertTrue(vaultCloseIndex >= 0, "App.stop() must call vault.close()");
+        assertTrue(shutdownIndex < alertChannelsCloseIndex,
+                "alertChannels.close() must come after dashboardController.shutdown()");
+        assertTrue(alertChannelsCloseIndex < vaultCloseIndex,
+                "alertChannels.close() must come before vault.close() -- a queued webhook "
+                        + "delivery may resolve its endpoint from the vault");
+    }
+
+    @Test
+    void w6DashboardControllerDeclaresNoVaultFieldOrImport() throws IOException {
+        for (Field field : DashboardController.class.getDeclaredFields()) {
+            assertFalse(field.getType() == com.argus.core.Vault.class,
+                    "DashboardController must declare no field of type Vault");
+        }
+        String source =
+                readSource(Path.of("src/main/java/com/argus/ui/DashboardController.java"));
+        assertFalse(source.contains("import com.argus.core.Vault;"),
+                "DashboardController must not import com.argus.core.Vault");
+    }
+
+    @Test
+    void w7WebhookAlertChannelHasTheCanonicalShutdownSequence() throws IOException {
+        String source =
+                readSource(Path.of("src/main/java/com/argus/ui/WebhookAlertChannel.java"));
+        assertTrue(source.contains("shutdown()"));
+        assertTrue(source.contains("awaitTermination"));
+        assertTrue(source.contains("shutdownNow()"));
+        assertTrue(source.contains("setDaemon(true)"));
+    }
+
+    @Test
+    void w8OnlyWebhookSettingsContainsTheVaultEntryLiteral() throws IOException {
+        Path uiSourceDir = Path.of("src/main/java/com/argus/ui");
+        List<Path> offenders = new java.util.ArrayList<>();
+        try (Stream<Path> walk = Files.walk(uiSourceDir)) {
+            walk.filter(Files::isRegularFile)
+                    .filter(p -> p.toString().endsWith(".java"))
+                    .filter(p -> !p.getFileName().toString().equals("WebhookSettings.java"))
+                    .forEach(p -> {
+                        try {
+                            if (Files.readString(p).contains("notify.webhook.url")) {
+                                offenders.add(p);
+                            }
+                        } catch (IOException e) {
+                            throw new UncheckedIOException(e);
+                        }
+                    });
+        }
+        assertEquals(List.of(), offenders,
+                "only WebhookSettings.java may contain the literal vault entry name");
     }
 
     private static Field findFieldOfType(Class<?> owner, Class<?> fieldType) {

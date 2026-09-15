@@ -1,9 +1,11 @@
 package com.argus.ui;
 
 import com.argus.core.FindingSnapshot;
+import com.argus.core.ScanAlert;
 import com.argus.core.ScanCompletion;
 import com.argus.core.ScanComparison;
 import com.argus.core.ScanSummary;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -58,9 +60,14 @@ final class ScanNotifications {
         return Optional.ofNullable(best);
     }
 
-    /** Gate 3, off the FX thread: the message, or empty when nothing was added (R3 — {@code
-     *  removed} and {@code changed} are ignored). */
-    static Optional<DesktopNotification> forComparison(ScanComparison comparison) {
+    /**
+     * Gate 3, off the FX thread: the single decision — is this comparison worth alerting on,
+     * and what does the alert carry. Empty iff {@code comparison.diff().added()} is empty (R3
+     * — {@code removed} and {@code changed} are ignored). The ONE authority feeding every
+     * {@code AlertChannel} (the desktop tray via {@link #desktopNotification}, the webhook
+     * channel directly).
+     */
+    static Optional<ScanAlert> alertFor(ScanComparison comparison) {
         Objects.requireNonNull(comparison, "comparison");
         List<FindingSnapshot> added = comparison.diff().added();
         if (added.isEmpty()) {
@@ -68,21 +75,45 @@ final class ScanNotifications {
         }
 
         int count = added.size();
+        int listed = Math.min(count, ScanAlert.MAX_SUBJECTS);
+        List<String> subjects = new ArrayList<>(listed);
+        for (int i = 0; i < listed; i++) {
+            subjects.add(describe(added.get(i)));
+        }
+
+        return Optional.of(new ScanAlert(comparison.current().target(), comparison.baseline().id(),
+                comparison.current().id(), count, subjects));
+    }
+
+    /** The desktop projection of an alert — byte-identical text to P3-02's original
+     *  {@code forComparison}. */
+    static DesktopNotification desktopNotification(ScanAlert alert) {
+        Objects.requireNonNull(alert, "alert");
+        int count = alert.addedCount();
         String caption = "Argus · " + count + (count == 1 ? " new finding" : " new findings");
 
-        StringBuilder text = new StringBuilder(comparison.current().target()).append(" · ");
+        StringBuilder text = new StringBuilder(alert.target()).append(" · ");
         int listed = Math.min(count, MAX_LISTED_SUBJECTS);
+        List<String> subjects = alert.addedSubjects();
         for (int i = 0; i < listed; i++) {
             if (i > 0) {
                 text.append(", ");
             }
-            text.append(describe(added.get(i)));
+            text.append(subjects.get(i));
         }
         if (count > MAX_LISTED_SUBJECTS) {
             text.append(" and ").append(count - MAX_LISTED_SUBJECTS).append(" more");
         }
 
-        return Optional.of(new DesktopNotification(caption, text.toString()));
+        return new DesktopNotification(caption, text.toString());
+    }
+
+    /** Gate 3, off the FX thread: the message, or empty when nothing was added (R3 — {@code
+     *  removed} and {@code changed} are ignored). UNCHANGED signature; the body is now a
+     *  one-line projection of {@link #alertFor} so there remains exactly one decision
+     *  authority (plan §3.3, R6). */
+    static Optional<DesktopNotification> forComparison(ScanComparison comparison) {
+        return alertFor(comparison).map(ScanNotifications::desktopNotification);
     }
 
     /** {@code "api.example.com"} / {@code "10.0.0.1:8080"} — the opaque-vocabulary probe rule.

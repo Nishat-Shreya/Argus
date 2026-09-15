@@ -7,6 +7,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.argus.core.FindingDelta;
 import com.argus.core.FindingSnapshot;
+import com.argus.core.ScanAlert;
 import com.argus.core.ScanCompletion;
 import com.argus.core.ScanComparison;
 import com.argus.core.ScanDiffReport;
@@ -206,6 +207,118 @@ class ScanNotificationsTest {
         Optional<DesktopNotification> notification = ScanNotifications.forComparison(comparison);
         assertTrue(notification.isPresent());
         assertTrue(notification.get().text().length() <= DesktopNotification.MAX_TEXT_CHARS);
+    }
+
+    // ---- alertFor() / desktopNotification() (P3-03 §3.3) -----------------
+
+    @Test
+    void n18EmptyAddedYieldsNoAlertEvenWithRemovedAndChanged() {
+        ScanDiffReport report = new ScanDiffReport(List.of(),
+                List.of(finding("gone.example.com", null, null)),
+                List.of(new FindingDelta(finding("host", 80, "OPEN"),
+                        finding("host", 80, "FILTERED"))));
+        ScanComparison comparison = comparison(report);
+        assertEquals(Optional.empty(), ScanNotifications.alertFor(comparison));
+    }
+
+    @Test
+    void n19HappyPathYieldsTargetIdsCountAndSubjectsInOrder() {
+        ScanDiffReport report = new ScanDiffReport(List.of(
+                finding("a.example.com", null, null),
+                finding("host", 8080, "OPEN")), List.of(), List.of());
+        ScanComparison comparison = comparison(report);
+        Optional<ScanAlert> alert = ScanNotifications.alertFor(comparison);
+        assertTrue(alert.isPresent());
+        assertEquals("example.com", alert.get().target());
+        assertEquals(1L, alert.get().baselineScanId());
+        assertEquals(2L, alert.get().currentScanId());
+        assertEquals(2, alert.get().addedCount());
+        assertEquals(List.of("a.example.com", "host:8080"), alert.get().addedSubjects());
+    }
+
+    @Test
+    void n20SixtyAddedFindingsCapsSubjectsAtFiftyAndMarksTruncated() {
+        List<FindingSnapshot> added = new ArrayList<>();
+        for (int i = 0; i < 60; i++) {
+            added.add(finding("host" + i + ".example.com", null, null));
+        }
+        ScanDiffReport report = new ScanDiffReport(added, List.of(), List.of());
+        ScanComparison comparison = comparison(report);
+        Optional<ScanAlert> alert = ScanNotifications.alertFor(comparison);
+        assertTrue(alert.isPresent());
+        assertEquals(60, alert.get().addedCount());
+        assertEquals(50, alert.get().addedSubjects().size());
+        assertTrue(alert.get().subjectsTruncated());
+    }
+
+    @Test
+    void n21DesktopNotificationAgreesWithForComparisonStrings() {
+        ScanDiffReport oneAdd =
+                new ScanDiffReport(List.of(finding("api.example.com", null, null)), List.of(),
+                        List.of());
+        ScanDiffReport threeAdd = new ScanDiffReport(List.of(
+                finding("a.example.com", null, null),
+                finding("b.example.com", null, null),
+                finding("c.example.com", null, null)), List.of(), List.of());
+        ScanDiffReport sixAdd = new ScanDiffReport(List.of(
+                finding("a.example.com", null, null),
+                finding("b.example.com", null, null),
+                finding("c.example.com", null, null),
+                finding("d.example.com", null, null),
+                finding("e.example.com", null, null),
+                finding("f.example.com", null, null)), List.of(), List.of());
+
+        for (ScanDiffReport report : List.of(oneAdd, threeAdd, sixAdd)) {
+            ScanComparison comparison = comparison(report);
+            DesktopNotification viaForComparison =
+                    ScanNotifications.forComparison(comparison).orElseThrow();
+            DesktopNotification viaAlert = ScanNotifications
+                    .desktopNotification(ScanNotifications.alertFor(comparison).orElseThrow());
+            assertEquals(viaForComparison.caption(), viaAlert.caption());
+            assertEquals(viaForComparison.text(), viaAlert.text());
+        }
+    }
+
+    @Test
+    void n22ForComparisonDelegatesToAlertForAndDesktopNotification() {
+        List<ScanComparison> comparisons = List.of(
+                comparison(new ScanDiffReport(List.of(), List.of(), List.of())),
+                comparison(new ScanDiffReport(
+                        List.of(finding("a.example.com", null, null)), List.of(), List.of())),
+                comparison(new ScanDiffReport(List.of(
+                        finding("a.example.com", null, null),
+                        finding("b.example.com", null, null),
+                        finding("c.example.com", null, null),
+                        finding("d.example.com", null, null)), List.of(), List.of())));
+
+        for (ScanComparison comparison : comparisons) {
+            assertEquals(ScanNotifications.alertFor(comparison)
+                            .map(ScanNotifications::desktopNotification),
+                    ScanNotifications.forComparison(comparison));
+        }
+    }
+
+    @Test
+    void n23BlankTargetStillProducesAnAlertAndANotification() {
+        ScanSummary blankTargetCurrent = new ScanSummary(2L, "   ", STARTED, FINISHED, "COMPLETED");
+        ScanSummary baseline = summary(1L, "   ", "COMPLETED");
+        ScanDiffReport report =
+                new ScanDiffReport(List.of(finding("a.example.com", null, null)), List.of(),
+                        List.of());
+        ScanComparison comparison = new ScanComparison(baseline, blankTargetCurrent, report);
+
+        Optional<ScanAlert> alert = ScanNotifications.alertFor(comparison);
+        assertTrue(alert.isPresent());
+        assertEquals("   ", alert.get().target());
+
+        Optional<DesktopNotification> notification = ScanNotifications.forComparison(comparison);
+        assertTrue(notification.isPresent());
+    }
+
+    @Test
+    void n24Malformed() {
+        assertThrows(NullPointerException.class, () -> ScanNotifications.alertFor(null));
+        assertThrows(NullPointerException.class, () -> ScanNotifications.desktopNotification(null));
     }
 
     // ---- helpers -----------------------------------------------------

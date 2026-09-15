@@ -1,5 +1,6 @@
 package com.argus.ui;
 
+import com.argus.core.ScanAlert;
 import com.argus.core.ScanArchive;
 import com.argus.core.ScanArchiveException;
 import com.argus.core.ScanComparison;
@@ -57,6 +58,8 @@ public final class DashboardController {
     @FXML
     private Button timelineButton;
     @FXML
+    private Button notificationsButton;
+    @FXML
     private Circle liveDot;
     @FXML
     private Label messageLabel;
@@ -83,8 +86,11 @@ public final class DashboardController {
     private ScanHistory history;
 
     /** FX-thread-confined; injected by {@code App} after unlock. Defaults to the no-op fallback
-     *  so a scan finishing before injection (or in a test) never touches a real notifier. */
-    private DesktopNotifier notifier = DesktopNotifier.disabled();
+     *  so a scan finishing before injection (or in a test) never touches a real channel. Renamed
+     *  from P3-02's {@code notifier}/{@code setDesktopNotifier(DesktopNotifier)} (plan §3.6,
+     *  R5): fan-out to more than one channel means the desktop tray can no longer be the only
+     *  path a finished scan's alert takes. */
+    private AlertChannel channels = AlertChannels.none();
 
     /** FX-thread-confined; opens the key-vault panel. Never a Vault here (P1-06's decision). */
     private Runnable onOpenKeySettings;
@@ -100,6 +106,9 @@ public final class DashboardController {
 
     /** FX-thread-confined; opens the timeline panel. */
     private Runnable onOpenTimeline;
+
+    /** FX-thread-confined; opens the notifications settings panel. */
+    private Runnable onOpenNotificationSettings;
 
     @FXML
     @SuppressWarnings("unchecked")
@@ -264,15 +273,29 @@ public final class DashboardController {
         }
     }
 
+    /** Injected by App: opens the notifications settings panel. */
+    public void setOpenNotificationSettingsHandler(Runnable handler) {
+        this.onOpenNotificationSettings = handler;
+    }
+
+    @FXML
+    private void onOpenNotificationSettings() {
+        if (onOpenNotificationSettings != null) {
+            onOpenNotificationSettings.run();
+        }
+    }
+
     /** Called by {@code App.stop()}. Closes the coordinator. Idempotent. */
     public void shutdown() {
         stopLiveDot();
         coordinator.close();
     }
 
-    /** Injected by App: the desktop-notification capability (P3-02 §3.7). */
-    public void setDesktopNotifier(DesktopNotifier notifier) {
-        this.notifier = notifier;
+    /** Injected by App: the alert fan-out (P3-03 §3.6). REPLACES P3-02's
+     *  {@code setDesktopNotifier(DesktopNotifier)} — fan-out to more than one channel means the
+     *  desktop tray can no longer be the only path a finished scan's alert takes (R5). */
+    public void setAlertChannel(AlertChannel channels) {
+        this.channels = channels;
     }
 
     /** Package-private test seam: swaps in a {@link ScanHistory} without going through
@@ -317,9 +340,9 @@ public final class DashboardController {
         String target = outcome.run().target();
         long savedScanId = outcome.savedScanId();
 
-        Task<Optional<DesktopNotification>> task = new Task<>() {
+        Task<Optional<ScanAlert>> task = new Task<>() {
             @Override
-            protected Optional<DesktopNotification> call() throws ScanArchiveException {
+            protected Optional<ScanAlert> call() throws ScanArchiveException {
                 List<ScanSummary> all = history.listScans();
                 Optional<Long> baseline =
                         ScanNotifications.baselineScanId(all, target, savedScanId);
@@ -327,13 +350,13 @@ public final class DashboardController {
                     return Optional.empty();
                 }
                 ScanComparison comparison = history.compare(baseline.get(), savedScanId);
-                return ScanNotifications.forComparison(comparison);
+                return ScanNotifications.alertFor(comparison);
             }
         };
 
-        task.setOnSucceeded(event -> task.getValue().ifPresent(n -> {
-            notifier.show(n);
-            appendLog("notification · " + n.caption());
+        task.setOnSucceeded(event -> task.getValue().ifPresent(alert -> {
+            channels.deliver(alert);
+            appendLog("notification · " + ScanNotifications.desktopNotification(alert).caption());
         }));
 
         task.setOnFailed(event -> appendLog(
