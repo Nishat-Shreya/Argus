@@ -47,6 +47,25 @@
                    wrapText="true"/>
         </HBox>
     </top>
+    <left>
+        <VBox fx:id="queueDropZone" styleClass="target-queue-panel drop-zone" prefWidth="240"
+              spacing="8">
+            <Label text="target queue" styleClass="card-title"/>
+            <Label text="drop domains or a text file here" styleClass="form-hint" wrapText="true"/>
+            <ListView fx:id="queueList" styleClass="target-queue-list" VBox.vgrow="ALWAYS">
+                <placeholder>
+                    <Label text="queue is empty"/>
+                </placeholder>
+            </ListView>
+            <HBox spacing="8">
+                <Button fx:id="runQueueButton" text="run queue" styleClass="primary-button"
+                        onAction="#onRunQueue" disable="true"/>
+                <Button fx:id="removeQueuedButton" text="remove" styleClass="secondary-button"
+                        onAction="#onRemoveQueued" disable="true"/>
+            </HBox>
+            <Label fx:id="queueStatusLabel" styleClass="queue-status" wrapText="true"/>
+        </VBox>
+    </left>
     <center>
         <SplitPane dividerPositions="0.6">
             <TableView fx:id="findingsTable" styleClass="findings-table">

@@ -77,6 +77,15 @@ class ThemeResourceTest {
                 "the first -argus- token must be declared after the .root selector");
     }
 
+    @Test
+    void themeCssDeclaresTheDropZoneActiveSelector() {
+        Pattern selector = Pattern.compile("\\.drop-zone-active\\b");
+        assertTrue(selector.matcher(css).find(),
+                "theme.css must declare a .drop-zone-active selector (plan §3.8) -- it is "
+                        + "applied/removed in Java on DRAG_ENTERED/DRAG_EXITED, so it is invisible "
+                        + "to DashboardViewResourceTest's FXML styleClass scan");
+    }
+
     private static int indexOfRootSelector(String text) {
         Matcher m = Pattern.compile("\\.root\\s*\\{").matcher(text);
         return m.find() ? m.start() : -1;

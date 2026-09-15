@@ -6,6 +6,10 @@ import com.argus.core.ScanArchiveException;
 import com.argus.core.ScanComparison;
 import com.argus.core.ScanHistory;
 import com.argus.core.ScanSummary;
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -24,7 +28,11 @@ import javafx.scene.control.ProgressBar;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.control.TextField;
+import javafx.scene.input.Dragboard;
+import javafx.scene.input.DragEvent;
+import javafx.scene.input.TransferMode;
 import javafx.scene.layout.HBox;
+import javafx.scene.layout.VBox;
 import javafx.scene.shape.Circle;
 
 /**
@@ -75,10 +83,39 @@ public final class DashboardController {
     private ProgressBar progressBar;
     @FXML
     private Label statusLine;
+    @FXML
+    private VBox queueDropZone;
+    @FXML
+    private ListView<String> queueList;
+    @FXML
+    private Button runQueueButton;
+    @FXML
+    private Button removeQueuedButton;
+    @FXML
+    private Label queueStatusLabel;
 
     private final ObservableList<String> workerItems = FXCollections.observableArrayList();
     private final ObservableList<String> logItems = FXCollections.observableArrayList();
     private final Map<String, Integer> workerRowIndex = new LinkedHashMap<>();
+
+    /** FX-thread-confined pending scan-target queue (plan §3.5, §4.1) -- NOT the invariant-4
+     *  producer-consumer pipeline; no scan thread ever touches it. */
+    private final TargetQueue targetQueue = new TargetQueue();
+    private final ObservableList<String> queueItems = FXCollections.observableArrayList();
+
+    /** FX-thread-confined, not volatile -- read-then-written, safe only because every access is
+     *  confined to the FX thread (plan §4.3). True while {@code run queue} is driving the
+     *  coordinator through successive targets. */
+    private boolean queueRunning;
+
+    /** FX-thread-confined, not volatile. Set once by {@link #shutdown()} so a {@code runLater}
+     *  queue-advance still in flight during {@code App.stop()} cannot call {@code start()} on a
+     *  closed coordinator (plan §3.6 point 4, the P3-02 shutdown-race lesson). */
+    private boolean queueStopped;
+
+    /** FX-thread-confined. The currently-running scan's normalized target, or {@code null} when
+     *  idle; it occupies a queue slot so a re-drop of the running target is a duplicate. */
+    private String activeTarget;
 
     private ScanCoordinator coordinator;
     private FadeTransition liveDotPulse;
@@ -134,6 +171,17 @@ public final class DashboardController {
         workerList.setItems(workerItems);
         logConsole.setItems(logItems);
 
+        queueList.setItems(queueItems);
+        queueList.getSelectionModel().selectedItemProperty()
+                .addListener((obs, oldValue, newValue) -> updateQueueControls());
+        queueDropZone.setOnDragOver(this::handleDragOver);
+        queueDropZone.setOnDragEntered(
+                event -> queueDropZone.getStyleClass().add("drop-zone-active"));
+        queueDropZone.setOnDragExited(
+                event -> queueDropZone.getStyleClass().remove("drop-zone-active"));
+        queueDropZone.setOnDragDropped(this::handleDragDropped);
+        updateQueueControls();
+
         coordinator = new ScanCoordinator(new ScanEventListener() {
             @Override
             public void onScanStarted(ScanPlan plan, List<String> jobNames) {
@@ -178,7 +226,17 @@ public final class DashboardController {
             AnimationUtils.shake(toolbar);
             return;
         }
+        startScan(result.target());
+    }
 
+    /**
+     * The single scan-start path shared by the typed {@link #onScan()} route and queue
+     * advancement (plan §3.6, §0.3 point 3) -- so the reset/disable/animate sequence cannot
+     * drift between them. {@code normalizedTarget} is already validated: by
+     * {@link DashboardValidation} for the typed path, by {@link DroppedTargets#parse} (which
+     * reuses the same {@code core.DomainName} rule) for the queued path.
+     */
+    private void startScan(String normalizedTarget) {
         clearMessage();
         findingsTable.getItems().clear();
         logItems.clear();
@@ -193,9 +251,13 @@ public final class DashboardController {
         pauseButton.setText("pause");
         cancelButton.setDisable(false);
         targetField.setEditable(false);
+        targetField.setText(normalizedTarget);
+
+        activeTarget = normalizedTarget;
+        updateQueueControls();
 
         startLiveDot();
-        coordinator.start(ScanPlan.of(result.target()));
+        coordinator.start(ScanPlan.of(normalizedTarget));
     }
 
     @FXML
@@ -216,6 +278,32 @@ public final class DashboardController {
     private void onCancel() {
         appendLog("cancel requested · in-flight probes stop within the connect timeout");
         coordinator.cancel();
+    }
+
+    /** Explicit start (plan §0.3): a drag-and-drop gesture only fills the queue, never starts
+     *  scanning it. Requires: not shut down, no scan already running, queue non-empty. */
+    @FXML
+    private void onRunQueue() {
+        if (queueStopped || coordinator.isRunning() || targetQueue.isEmpty()) {
+            return;
+        }
+        queueRunning = true;
+        targetQueue.poll().ifPresent(this::startScan);
+        refreshQueueView();
+        updateQueueControls();
+    }
+
+    /** Removes the selected pending target -- the minimum correction affordance for a mistaken
+     *  drop (plan §7 R4). No drag-to-reorder, no clear-all. */
+    @FXML
+    private void onRemoveQueued() {
+        String selected = queueList.getSelectionModel().getSelectedItem();
+        if (selected == null) {
+            return;
+        }
+        targetQueue.remove(selected);
+        refreshQueueView();
+        updateQueueControls();
     }
 
     /** Injected by App: opens the key-vault settings panel. */
@@ -304,6 +392,7 @@ public final class DashboardController {
 
     /** Called by {@code App.stop()}. Closes the coordinator. Idempotent. */
     public void shutdown() {
+        queueStopped = true;
         stopLiveDot();
         coordinator.close();
     }
@@ -341,6 +430,146 @@ public final class DashboardController {
         statusLine.setText(resultWord + " · " + savedWord);
 
         maybeNotify(outcome);
+        advanceQueue(outcome);
+    }
+
+    /**
+     * Sequential queue execution (plan §0.3): {@code COMPLETED} and
+     * {@code COMPLETED_WITH_ERRORS} advance to the next pending target; {@code CANCELLED} halts
+     * the queue and retains the pending targets. Called once, at the end of
+     * {@link #onScanFinishedOnFxThread}, after {@link #maybeNotify}. {@code ScanCoordinator} is
+     * untouched: this reacts to its existing finished-scan callback, exactly as the typed
+     * {@code scan} button's next click already could.
+     */
+    private void advanceQueue(ScanOutcome outcome) {
+        activeTarget = null;
+        if (queueStopped || !queueRunning) {
+            updateQueueControls();
+            return;
+        }
+        if (!TargetQueue.advancesAfter(outcome.result())) {
+            queueRunning = false;
+            String halted =
+                    "queue halted · cancelled · " + targetQueue.size() + " target(s) remaining";
+            queueStatusLabel.setText(halted);
+            appendLog(halted);
+            refreshQueueView();
+            updateQueueControls();
+            return;
+        }
+        Optional<String> next = targetQueue.poll();
+        if (next.isEmpty()) {
+            queueRunning = false;
+            queueStatusLabel.setText("queue finished");
+            appendLog("queue finished");
+            refreshQueueView();
+            updateQueueControls();
+            return;
+        }
+        refreshQueueView();
+        startScan(next.get());
+    }
+
+    /**
+     * DRAG_OVER fires repeatedly during the gesture; nothing blocking may happen here. Accepts
+     * {@code COPY} only -- never {@code ANY}, never {@code MOVE} (plan §0.2): accepting
+     * {@code MOVE} would let the source application delete the operator's dropped file.
+     */
+    private void handleDragOver(DragEvent event) {
+        Dragboard board = event.getDragboard();
+        if (board.hasFiles() || board.hasString()) {
+            event.acceptTransferModes(TransferMode.COPY);
+        }
+        event.consume();
+    }
+
+    /**
+     * The four in-memory steps of plan §4.2, in order: (1) snapshot the ENTIRE dragboard into a
+     * toolkit-free {@link DroppedContent} -- ALL dragboard reads happen here, because the
+     * javadoc states no dragboard access can happen after {@code setDropCompleted}; (2) complete
+     * and consume the event; (3) hand the already-captured snapshot to {@link #acceptDrop}; (4)
+     * clear the hover highlight.
+     */
+    private void handleDragDropped(DragEvent event) {
+        DroppedContent content = contentOf(event.getDragboard());
+        event.setDropCompleted(true);
+        event.consume();
+        acceptDrop(content);
+        queueDropZone.getStyleClass().remove("drop-zone-active");
+    }
+
+    /**
+     * Text path: parsed synchronously on the FX thread -- a regex split plus a bounded LDH
+     * regex per token, over a blob already capped by {@code DroppedTargets.MAX_TOKENS}, is
+     * microseconds (plan §4.2). File path: read on a background daemon {@code Task} --
+     * {@code Files.readAllBytes} on an arbitrary dropped path (UNC share, network drive,
+     * removable media) can take seconds and must never run on the FX thread (invariant 3).
+     */
+    private void acceptDrop(DroppedContent content) {
+        if (content.isEmpty()) {
+            return;
+        }
+        List<Path> files = DroppedTargets.filesOf(content);
+        if (!files.isEmpty()) {
+            Task<String> task = new Task<>() {
+                @Override
+                protected String call() throws IOException {
+                    return DroppedTargets.read(files);
+                }
+            };
+            task.setOnSucceeded(event -> admit(DroppedTargets.parse(task.getValue())));
+            task.setOnFailed(event -> {
+                Throwable failure = task.getException();
+                String message = failure == null ? "unknown error" : failure.getMessage();
+                queueStatusLabel.setText("drop ignored · " + message);
+                appendLog("drop ignored · " + message);
+            });
+            Thread thread = new Thread(task, "argus-target-drop");
+            thread.setDaemon(true);
+            thread.start();
+            return;
+        }
+        String text = DroppedTargets.textOf(content);
+        if (!text.isBlank()) {
+            admit(DroppedTargets.parse(text));
+        }
+    }
+
+    /** Offers a parsed drop to the queue, then renders the outcome -- one place for admit +
+     *  render + log (plan §3.6). */
+    private void admit(TargetDrop drop) {
+        QueueAdmission admission = targetQueue.admit(drop, activeTarget);
+        String description = admission.describe();
+        queueStatusLabel.setText(description);
+        appendLog("queue · " + description);
+        refreshQueueView();
+        updateQueueControls();
+    }
+
+    private void refreshQueueView() {
+        queueItems.setAll(targetQueue.pending());
+    }
+
+    private void updateQueueControls() {
+        runQueueButton.setDisable(
+                queueStopped || coordinator.isRunning() || targetQueue.isEmpty());
+        removeQueuedButton.setDisable(queueList.getSelectionModel().getSelectedItem() == null);
+    }
+
+    /** The ONLY {@code Dragboard}-aware code in this class (plan §3.6): converts a live
+     *  {@code Dragboard} into a toolkit-free snapshot. Files win over text (plan §0.2). */
+    private static DroppedContent contentOf(Dragboard board) {
+        if (board.hasFiles()) {
+            List<Path> paths = new ArrayList<>();
+            for (File file : board.getFiles()) {
+                paths.add(file.toPath());
+            }
+            return DroppedContent.ofFiles(paths);
+        }
+        if (board.hasString()) {
+            return DroppedContent.ofText(board.getString());
+        }
+        return DroppedContent.none();
     }
 
     /**

@@ -128,6 +128,28 @@ class DashboardViewResourceTest {
     }
 
     @Test
+    void v1TheQueueListIsAListView() {
+        Element queueListElement = findElementWithFxId(document.getDocumentElement(), "queueList");
+        assertNotNull(queueListElement, "no element with fx:id=\"queueList\" found");
+        assertEquals("ListView", queueListElement.getTagName());
+    }
+
+    @Test
+    void v2TheQueueDropZoneCarriesTheDropZoneStyleClass() {
+        Element dropZoneElement =
+                findElementWithFxId(document.getDocumentElement(), "queueDropZone");
+        assertNotNull(dropZoneElement, "no element with fx:id=\"queueDropZone\" found");
+        Set<String> styleClasses = new HashSet<>();
+        for (String token : dropZoneElement.getAttribute("styleClass").trim().split("\\s+")) {
+            if (!token.isEmpty()) {
+                styleClasses.add(token);
+            }
+        }
+        assertTrue(styleClasses.contains("drop-zone"),
+                "queueDropZone must carry the drop-zone style class");
+    }
+
+    @Test
     void everyStyleClassUsedByTheViewExistsInTheme() throws Exception {
         Set<String> styleClasses = collectStyleClasses(document.getDocumentElement());
         assertTrue(!styleClasses.isEmpty(), "expected at least one styleClass in dashboard-view.fxml");

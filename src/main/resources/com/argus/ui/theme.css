@@ -699,3 +699,37 @@
     -fx-text-fill: -argus-text-muted;
     -fx-font-size: 12px;
 }
+
+/* P3-05: drag-and-drop target queue panel. Append-only -- the .root token block at the top is
+   pinned by ThemeResourceTest and must not be reordered or edited. */
+
+.target-queue-panel {
+    -fx-background-color: -argus-bg-panel;
+    -fx-border-color: -argus-border;
+    -fx-border-width: 0 1 0 0;
+    -fx-padding: 12;
+    -fx-spacing: 8;
+}
+
+.target-queue-list {
+    -fx-background-color: -argus-bg-panel-alt;
+    -fx-border-color: -argus-border;
+    -fx-border-width: 1;
+}
+
+.drop-zone {
+    -fx-border-color: -argus-border;
+    -fx-border-width: 2;
+    -fx-border-style: dashed;
+    -fx-border-radius: 4;
+    -fx-background-radius: 4;
+}
+
+.drop-zone-active {
+    -fx-border-color: -argus-accent;
+}
+
+.queue-status {
+    -fx-text-fill: -argus-text-secondary;
+    -fx-font-size: 12px;
+}
