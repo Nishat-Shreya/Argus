@@ -1,14 +1,20 @@
 package com.argus.ui;
 
 import com.argus.core.ScanArchive;
+import com.argus.core.ScanArchiveException;
+import com.argus.core.ScanComparison;
+import com.argus.core.ScanHistory;
+import com.argus.core.ScanSummary;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import javafx.animation.FadeTransition;
 import javafx.application.Platform;
 import javafx.beans.property.ReadOnlyStringWrapper;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import javafx.concurrent.Task;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
@@ -71,6 +77,14 @@ public final class DashboardController {
 
     private ScanCoordinator coordinator;
     private FadeTransition liveDotPulse;
+
+    /** FX-thread-confined; set in {@link #initialize()}. Construction does no I/O (the {@code
+     *  ScanArchive} contract), so this is legal on the FX thread. */
+    private ScanHistory history;
+
+    /** FX-thread-confined; injected by {@code App} after unlock. Defaults to the no-op fallback
+     *  so a scan finishing before injection (or in a test) never touches a real notifier. */
+    private DesktopNotifier notifier = DesktopNotifier.disabled();
 
     /** FX-thread-confined; opens the key-vault panel. Never a Vault here (P1-06's decision). */
     private Runnable onOpenKeySettings;
@@ -138,6 +152,8 @@ public final class DashboardController {
                 Platform.runLater(() -> onScanFinishedOnFxThread(outcome));
             }
         }, new DefaultScanJobFactory(), ScanArchive.atDefaultLocation()::save);
+
+        history = ScanHistory.atDefaultLocation();
     }
 
     @FXML
@@ -254,6 +270,17 @@ public final class DashboardController {
         coordinator.close();
     }
 
+    /** Injected by App: the desktop-notification capability (P3-02 §3.7). */
+    public void setDesktopNotifier(DesktopNotifier notifier) {
+        this.notifier = notifier;
+    }
+
+    /** Package-private test seam: swaps in a {@link ScanHistory} without going through
+     *  {@link #initialize()} (P2-09's precedent for FX-thread-confined test doubles). */
+    void setHistoryForTest(ScanHistory history) {
+        this.history = history;
+    }
+
     private void onScanFinishedOnFxThread(ScanOutcome outcome) {
         stopLiveDot();
         scanButton.setDisable(false);
@@ -272,6 +299,49 @@ public final class DashboardController {
                 : "NOT SAVED — see log";
         appendLog("scan finished · " + outcome.findingsDelivered() + " findings · " + resultWord);
         statusLine.setText(resultWord + " · " + savedWord);
+
+        maybeNotify(outcome);
+    }
+
+    /**
+     * P3-02 §4.1: gate 1 is checked here, instantly, on the FX thread. Everything past that —
+     * the blocking {@code ScanHistory} read and the diff — runs on a dedicated daemon thread, so
+     * a scan finishing never blocks the FX thread on the database. {@code ScanCoordinator} is
+     * untouched: this reads already-persisted history one step after the coordinator's own
+     * final event, not a new hook into its supervisor loop.
+     */
+    private void maybeNotify(ScanOutcome outcome) {
+        if (!ScanNotifications.eligible(outcome)) {
+            return;
+        }
+        String target = outcome.run().target();
+        long savedScanId = outcome.savedScanId();
+
+        Task<Optional<DesktopNotification>> task = new Task<>() {
+            @Override
+            protected Optional<DesktopNotification> call() throws ScanArchiveException {
+                List<ScanSummary> all = history.listScans();
+                Optional<Long> baseline =
+                        ScanNotifications.baselineScanId(all, target, savedScanId);
+                if (baseline.isEmpty()) {
+                    return Optional.empty();
+                }
+                ScanComparison comparison = history.compare(baseline.get(), savedScanId);
+                return ScanNotifications.forComparison(comparison);
+            }
+        };
+
+        task.setOnSucceeded(event -> task.getValue().ifPresent(n -> {
+            notifier.show(n);
+            appendLog("notification · " + n.caption());
+        }));
+
+        task.setOnFailed(event -> appendLog(
+                "notification check skipped · " + task.getException().getMessage()));
+
+        Thread thread = new Thread(task, "argus-scan-history");
+        thread.setDaemon(true);
+        thread.start();
     }
 
     private void updateWorkerRow(WorkerStatus status) {

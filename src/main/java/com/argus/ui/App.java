@@ -30,6 +30,10 @@ public final class App extends Application {
     /** FX-thread-confined: assigned once on unlock, closed by {@link #stop()} (invariant 6). */
     private DashboardController dashboardController;
 
+    /** FX-thread-confined: created once, after unlock, and closed by {@link #stop()} before the
+     *  vault (P3-02 §3.7). Defaults to the no-op fallback so a shutdown before unlock is safe. */
+    private DesktopNotifier desktopNotifier = DesktopNotifier.disabled();
+
     /** FX-thread-confined: retained so returning from the key vault is a RESTORE, not a reload. */
     private Parent dashboardRoot;
 
@@ -85,6 +89,8 @@ public final class App extends Application {
                 dashboardController.setOpenChartsHandler(() -> showCharts(scene));
                 dashboardController.setOpenGraphHandler(() -> showGraph(scene));
                 dashboardController.setOpenTimelineHandler(() -> showTimeline(scene));
+                this.desktopNotifier = DesktopNotifiers.create();
+                dashboardController.setDesktopNotifier(desktopNotifier);
                 scene.setRoot(dashboardRoot);
             } catch (IOException e) {
                 throw new IllegalStateException("failed to load dashboard-view.fxml", e);
@@ -210,16 +216,20 @@ public final class App extends Application {
 
     /**
      * JavaFX shutdown hook. Shuts the dashboard's scan down first (invariant 6 — P0-02's
-     * reservation of this method for the scan {@code ExecutorService}), then closes the vault,
-     * if one was ever unlocked — the zeroization-at-app-close tie-in (plan §4.6). Scan first,
-     * vault second: the vault is not used by the scan, but "stop the work, then release the
-     * credential" is the order that stays correct if that ever changes.
+     * reservation of this method for the scan {@code ExecutorService}), then releases the
+     * desktop-notifier's OS resource (P3-02 §3.7 — the tray icon must be gone before the FX
+     * toolkit winds down, or AWT's non-daemon helper threads can keep the JVM alive, JDK-6412791;
+     * this is {@code App.stop()}, not a shutdown hook, for the reason JDK-8042114 warns about),
+     * then closes the vault, if one was ever unlocked — the zeroization-at-app-close tie-in
+     * (plan §4.6). Scan first, notifier second, vault third: stop the work, release the OS
+     * resource, then release the credential.
      */
     @Override
     public void stop() {
         if (dashboardController != null) {
             dashboardController.shutdown();
         }
+        desktopNotifier.close();
         if (vault != null) {
             try {
                 vault.close();

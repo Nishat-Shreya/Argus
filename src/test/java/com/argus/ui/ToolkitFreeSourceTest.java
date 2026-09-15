@@ -61,7 +61,12 @@ class ToolkitFreeSourceTest {
             "TimelinePoint.java",
             "TimelineTrack.java",
             "Timelines.java",
-            "SnapshotRows.java");
+            "SnapshotRows.java",
+            "DesktopNotification.java",
+            "DesktopNotifier.java",
+            "DesktopNotifiers.java",
+            "ScanNotifications.java",
+            "SystemTrayNotifier.java");
 
     @Test
     void noneOfTheOrchestrationClassesImportJavaFx() {
@@ -87,9 +92,9 @@ class ToolkitFreeSourceTest {
     }
 
     @Test
-    void exactlyFortyClassesAreChecked() {
-        assertTrue(TOOLKIT_FREE_CLASSES.size() == 40,
-                "expected 40 toolkit-free classes, found " + TOOLKIT_FREE_CLASSES.size());
+    void exactlyFortyFiveClassesAreChecked() {
+        assertTrue(TOOLKIT_FREE_CLASSES.size() == 45,
+                "expected 45 toolkit-free classes, found " + TOOLKIT_FREE_CLASSES.size());
     }
 
     private static boolean violatesImportRule(String line) {
