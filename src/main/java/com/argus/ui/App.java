@@ -81,6 +81,12 @@ public final class App extends Application {
     /** FX-thread-confined: lazily loaded on first open, then retained. */
     private Parent timelineRoot;
 
+    /** FX-thread-confined: assigned on first visit to the report export panel. */
+    private ReportController reportController;
+
+    /** FX-thread-confined: lazily loaded on first open, then retained. */
+    private Parent reportRoot;
+
     @Override
     public void start(Stage stage) throws Exception {
         FXMLLoader loader = new FXMLLoader(getClass().getResource("login-view.fxml"));
@@ -103,6 +109,7 @@ public final class App extends Application {
                 dashboardController.setOpenChartsHandler(() -> showCharts(scene));
                 dashboardController.setOpenGraphHandler(() -> showGraph(scene));
                 dashboardController.setOpenTimelineHandler(() -> showTimeline(scene));
+                dashboardController.setOpenReportHandler(() -> showReport(scene));
                 dashboardController.setOpenNotificationSettingsHandler(
                         () -> showNotificationSettings(scene));
                 this.desktopNotifier = DesktopNotifiers.create();
@@ -232,6 +239,28 @@ public final class App extends Application {
         }
         timelineController.refresh();
         scene.setRoot(timelineRoot);
+    }
+
+    /**
+     * Loads {@code report-view.fxml} once, on first use, and retains it (the
+     * {@link #showTimeline(Scene)} shape, plan §1's ninth root swap). Every subsequent open
+     * reuses the same root and just calls {@link ReportController#refresh()}.
+     */
+    private void showReport(Scene scene) {
+        if (reportRoot == null) {
+            try {
+                FXMLLoader reportLoader =
+                        new FXMLLoader(getClass().getResource("report-view.fxml"));
+                this.reportRoot = reportLoader.load();
+                this.reportController = reportLoader.getController();
+                reportController.setHistory(ScanHistory.atDefaultLocation());
+                reportController.setOnClose(() -> scene.setRoot(dashboardRoot));
+            } catch (IOException e) {
+                throw new IllegalStateException("failed to load report-view.fxml", e);
+            }
+        }
+        reportController.refresh();
+        scene.setRoot(reportRoot);
     }
 
     /**

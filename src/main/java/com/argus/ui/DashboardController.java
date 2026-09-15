@@ -58,6 +58,8 @@ public final class DashboardController {
     @FXML
     private Button timelineButton;
     @FXML
+    private Button reportButton;
+    @FXML
     private Button notificationsButton;
     @FXML
     private Circle liveDot;
@@ -106,6 +108,9 @@ public final class DashboardController {
 
     /** FX-thread-confined; opens the timeline panel. */
     private Runnable onOpenTimeline;
+
+    /** FX-thread-confined; opens the report export panel. */
+    private Runnable onOpenReport;
 
     /** FX-thread-confined; opens the notifications settings panel. */
     private Runnable onOpenNotificationSettings;
@@ -270,6 +275,18 @@ public final class DashboardController {
     private void onOpenTimeline() {
         if (onOpenTimeline != null) {
             onOpenTimeline.run();
+        }
+    }
+
+    /** Injected by App: opens the report export panel. */
+    public void setOpenReportHandler(Runnable handler) {
+        this.onOpenReport = handler;
+    }
+
+    @FXML
+    private void onOpenReport() {
+        if (onOpenReport != null) {
+            onOpenReport.run();
         }
     }
 

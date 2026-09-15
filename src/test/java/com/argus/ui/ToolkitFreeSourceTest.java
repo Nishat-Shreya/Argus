@@ -71,7 +71,11 @@ class ToolkitFreeSourceTest {
             "AlertChannels.java",
             "DesktopAlertChannel.java",
             "WebhookAlertChannel.java",
-            "WebhookSettings.java");
+            "WebhookSettings.java",
+            "ReportModel.java",
+            "HtmlReport.java",
+            "Reports.java",
+            "ReportFiles.java");
 
     @Test
     void noneOfTheOrchestrationClassesImportJavaFx() {
@@ -97,9 +101,9 @@ class ToolkitFreeSourceTest {
     }
 
     @Test
-    void exactlyFiftyClassesAreChecked() {
-        assertTrue(TOOLKIT_FREE_CLASSES.size() == 50,
-                "expected 50 toolkit-free classes, found " + TOOLKIT_FREE_CLASSES.size());
+    void exactlyFiftyFourClassesAreChecked() {
+        assertTrue(TOOLKIT_FREE_CLASSES.size() == 54,
+                "expected 54 toolkit-free classes, found " + TOOLKIT_FREE_CLASSES.size());
     }
 
     private static boolean violatesImportRule(String line) {

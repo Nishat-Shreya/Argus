@@ -641,3 +641,61 @@
     -fx-text-fill: -argus-text-primary;
     -fx-font-family: "Consolas", "Courier New", "Monospaced";
 }
+
+/* P3-04: report export view. Append-only -- the .root token block at the top is pinned by
+   ThemeResourceTest and must not be reordered or edited. */
+
+.report-root {
+    -fx-background-color: -argus-bg-base;
+}
+
+.report-preview {
+    -fx-background-color: -argus-bg-panel;
+    -fx-border-color: -argus-border;
+    -fx-border-width: 1;
+}
+
+.report-table {
+    -fx-background-color: -argus-bg-panel;
+    -fx-border-color: -argus-border;
+    -fx-border-width: 1;
+}
+
+.report-table .column-header-background {
+    -fx-background-color: -argus-bg-panel-alt;
+}
+
+.report-table .column-header {
+    -fx-background-color: -argus-bg-panel-alt;
+    -fx-border-color: -argus-border;
+}
+
+.report-table .column-header .label {
+    -fx-text-fill: -argus-text-secondary;
+}
+
+.report-table .table-row-cell {
+    -fx-background-color: -argus-bg-panel;
+    -fx-table-cell-border-color: -argus-border;
+}
+
+.report-table .table-row-cell:odd {
+    -fx-background-color: -argus-bg-panel-alt;
+}
+
+.report-table .table-row-cell:selected {
+    -fx-background-color: -argus-border-strong;
+}
+
+.report-table .table-cell {
+    -fx-text-fill: -argus-text-primary;
+}
+
+.report-table .placeholder .label {
+    -fx-text-fill: -argus-text-muted;
+}
+
+.report-note {
+    -fx-text-fill: -argus-text-muted;
+    -fx-font-size: 12px;
+}

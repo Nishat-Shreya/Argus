@@ -38,6 +38,8 @@
                     onAction="#onOpenGraph"/>
             <Button fx:id="timelineButton" text="timeline" styleClass="secondary-button"
                     onAction="#onOpenTimeline"/>
+            <Button fx:id="reportButton" text="report" styleClass="secondary-button"
+                    onAction="#onOpenReport"/>
             <Button fx:id="notificationsButton" text="notifications" styleClass="secondary-button"
                     onAction="#onOpenNotificationSettings"/>
             <Circle fx:id="liveDot" radius="5" styleClass="live-dot"/>
