@@ -11,17 +11,21 @@ import java.util.List;
 import org.junit.jupiter.api.Test;
 
 /**
- * The structural guard for §0.3.2 of the plan: reflects over the five boundary-projection
+ * The structural guard for §0.3.2 of the plan: reflects over the six boundary-projection
  * records and asserts that no record component's type, and no type argument of a component's
  * generic type, has a package name starting {@code com.argus.db}. This is the inference hole
  * that a plain import scan cannot catch — it fails if someone later "simplifies"
  * {@code ScanDiffReport} by re-typing a list as {@code List<FindingRecord>}.
+ *
+ * {@code FindingNote} joins the list in P3-06 (plan R7): a genuine gap being closed, not a
+ * convenience edit — a new public {@code core} record on the {@code ui} boundary that was not in
+ * this list is exactly the inference hole this test exists to close.
  */
 class ProjectionBoundaryTest {
 
     private static final List<Class<?>> PROJECTION_TYPES = List.of(
             ScanSummary.class, FindingSnapshot.class, FindingDelta.class, ScanDiffReport.class,
-            ScanComparison.class);
+            ScanComparison.class, FindingNote.class);
 
     @Test
     void noRecordComponentNamesADbType() {
@@ -52,8 +56,8 @@ class ProjectionBoundaryTest {
     }
 
     @Test
-    void allFiveProjectionTypesAreCovered() {
-        assertEquals(5, PROJECTION_TYPES.size());
+    void allSixProjectionTypesAreCovered() {
+        assertEquals(6, PROJECTION_TYPES.size());
     }
 
     @Test

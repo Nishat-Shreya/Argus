@@ -4,10 +4,14 @@ import java.util.Objects;
 import javafx.animation.Animation;
 import javafx.animation.FadeTransition;
 import javafx.animation.Interpolator;
+import javafx.animation.KeyFrame;
+import javafx.animation.KeyValue;
 import javafx.animation.ParallelTransition;
+import javafx.animation.Timeline;
 import javafx.animation.TranslateTransition;
 import javafx.application.Platform;
 import javafx.scene.Node;
+import javafx.scene.layout.Region;
 import javafx.util.Duration;
 
 /**
@@ -18,13 +22,15 @@ import javafx.util.Duration;
  * screen's validation-error feedback (plan section 7.11). Implemented in P1-06:
  * {@link #pulseDot(Node)}, the dashboard's live-activity indicator (plan §7.8).
  *
+ * <p>Implemented in P3-06: {@link #expandField(Region, double)}, the click-to-expand annotation
+ * field (plan §4.3).
+ *
  * <p>Not yet implemented (build-prompt "Standard motion types") — add each one in the
  * backlog item that first needs it, never as an empty placeholder:
  * <pre>
  *   scaleIn          modals/popups                 — first needed by P2-09
  *   glowPulse        KEV / attention containers    — first needed by P2-07 UI
  *   rippleOnClick    primary buttons               — first needed by P1-06
- *   click-to-expand  annotation field              — first needed by P3-06
  * </pre>
  */
 public final class AnimationUtils {
@@ -41,6 +47,8 @@ public final class AnimationUtils {
 
     private static final Duration PULSE_DURATION = Duration.millis(600);
     private static final double PULSE_MIN_OPACITY = 0.3;
+
+    private static final Duration EXPAND_DURATION = Duration.millis(180);
 
     /**
      * Visibility-only shared flag. Every access is an unconditional whole-word read or
@@ -164,5 +172,43 @@ public final class AnimationUtils {
 
         pulse.play();
         return pulse;
+    }
+
+    /**
+     * Click-to-expand field (spec.md "Click-to-expand field", P0-02 roadmap, first needed by
+     * P3-06): grows a one-line input into a multi-line text area, or shrinks it back. The
+     * caller owns both heights — they are screen layout values, not a shared rule.
+     *
+     * <p>Animates {@code prefHeight} only, via {@link Timeline} + {@link KeyValue} (the first
+     * use of {@code Timeline} in this class — the other three helpers use {@code Transition}
+     * subclasses, but {@code prefHeight} is an arbitrary {@code DoubleProperty} with no
+     * purpose-built {@code Transition}), over {@link #EXPAND_DURATION} (180&nbsp;ms),
+     * {@link Interpolator#EASE_OUT}. Under reduced motion the height is SET to
+     * {@code targetHeight} immediately and nothing is played (P0-02's "a skipped animation still
+     * leaves the node in its final state" rule).
+     *
+     * @throws NullPointerException     if field is null
+     * @throws IllegalArgumentException if targetHeight is negative
+     * @throws IllegalStateException    if called off the JavaFX Application Thread
+     */
+    public static void expandField(Region field, double targetHeight) {
+        Objects.requireNonNull(field, "field");
+        if (targetHeight < 0) {
+            throw new IllegalArgumentException(
+                    "targetHeight must not be negative: " + targetHeight);
+        }
+        if (!Platform.isFxApplicationThread()) {
+            throw new IllegalStateException(
+                    "expandField must be called on the JavaFX Application Thread");
+        }
+
+        if (isReducedMotion()) {
+            field.setPrefHeight(targetHeight);
+            return;
+        }
+
+        Timeline timeline = new Timeline(new KeyFrame(EXPAND_DURATION,
+                new KeyValue(field.prefHeightProperty(), targetHeight, Interpolator.EASE_OUT)));
+        timeline.play();
     }
 }

@@ -733,3 +733,53 @@
     -fx-text-fill: -argus-text-secondary;
     -fx-font-size: 12px;
 }
+
+/* P3-06: findings detail panel (annotations). Append-only -- the .root token block at the top is
+   pinned by ThemeResourceTest and must not be reordered or edited. */
+
+.findings-detail-root {
+    -fx-background-color: -argus-bg-base;
+}
+
+.detail-pane {
+    -fx-background-color: -argus-bg-panel;
+    -fx-border-color: -argus-border;
+    -fx-border-width: 1;
+    -fx-padding: 12;
+}
+
+.detail-line {
+    -fx-text-fill: -argus-text-primary;
+    -fx-font-family: "Consolas", "Courier New", "Monospaced";
+}
+
+.note-list {
+    -fx-background-color: -argus-bg-panel-alt;
+    -fx-border-color: -argus-border;
+    -fx-border-width: 1;
+}
+
+.note-list .list-cell {
+    -fx-background-color: -argus-bg-panel-alt;
+    -fx-text-fill: -argus-text-primary;
+}
+
+.note-timestamp {
+    -fx-text-fill: -argus-text-muted;
+    -fx-font-size: 11px;
+}
+
+.note-field {
+    -fx-background-color: -argus-bg-panel-alt;
+    -fx-border-color: -argus-border;
+    -fx-border-width: 1;
+    -fx-background-radius: 4;
+    -fx-border-radius: 4;
+    -fx-text-fill: -argus-text-primary;
+    -fx-prompt-text-fill: -argus-text-muted;
+    -fx-padding: 8;
+}
+
+.note-field-expanded {
+    -fx-border-color: -argus-border-strong;
+}

@@ -26,6 +26,7 @@ class ResourceClosureTest {
     private RecordingConnectionFactory recordingFactory;
     private ScanRepository scanRepository;
     private FindingDao findingDao;
+    private AnnotationDao annotationDao;
 
     @BeforeEach
     void setUp() throws Exception {
@@ -37,16 +38,21 @@ class ResourceClosureTest {
         Database database = Database.usingFactory(recordingFactory, dbFile);
         scanRepository = new ScanRepository(database);
         findingDao = new FindingDao(database);
+        annotationDao = new AnnotationDao(database);
     }
 
     @Test
     void everyReadClosesItsConnection() throws Exception {
         ScanRecord scan = scanRepository.insert(NewScan.running("example.com", NOW));
         findingDao.insertAll(scan.id(), List.of(NewFinding.port("host", 80, "OPEN")));
+        long findingId = findingDao.findByScan(scan.id()).get(0).id();
+        annotationDao.insert(findingId, new NewAnnotation("note", NOW));
 
         scanRepository.findById(scan.id());
         scanRepository.findAll();
         findingDao.findByScan(scan.id());
+        annotationDao.findByFinding(findingId);
+        annotationDao.findByScan(scan.id());
 
         assertTrue(recordingFactory.allClosed());
         assertTrue(recordingFactory.openedCount() > 0);
@@ -58,6 +64,9 @@ class ResourceClosureTest {
         findingDao.insertAll(scan.id(), List.of(NewFinding.port("host", 80, "OPEN")));
         scanRepository.saveSession(NewScan.running("example.org", NOW), List.of());
         scanRepository.finish(scan.id(), NOW.plusSeconds(1), ScanStatus.COMPLETED);
+        long findingId = findingDao.findByScan(scan.id()).get(0).id();
+        AnnotationRecord annotation = annotationDao.insert(findingId, new NewAnnotation("note", NOW));
+        annotationDao.deleteById(annotation.id());
 
         assertTrue(recordingFactory.allClosed());
     }
@@ -66,6 +75,14 @@ class ResourceClosureTest {
     void aFailedWriteStillClosesItsConnection() {
         assertThrows(PersistenceException.class, () -> findingDao.insertAll(
                 9999L, List.of(NewFinding.port("host", 80, "OPEN"))));
+
+        assertTrue(assertDoesNotThrowSql(recordingFactory::allClosed));
+    }
+
+    @Test
+    void aFailedAnnotationInsertStillClosesItsConnection() {
+        assertThrows(PersistenceException.class,
+                () -> annotationDao.insert(9999L, new NewAnnotation("note", NOW)));
 
         assertTrue(assertDoesNotThrowSql(recordingFactory::allClosed));
     }

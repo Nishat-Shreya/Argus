@@ -70,6 +70,8 @@ public final class DashboardController {
     @FXML
     private Button notificationsButton;
     @FXML
+    private Button findingsButton;
+    @FXML
     private Circle liveDot;
     @FXML
     private Label messageLabel;
@@ -151,6 +153,9 @@ public final class DashboardController {
 
     /** FX-thread-confined; opens the notifications settings panel. */
     private Runnable onOpenNotificationSettings;
+
+    /** FX-thread-confined; opens the findings detail panel (P3-06, the 8th nav button). */
+    private Runnable onOpenFindingsDetail;
 
     @FXML
     @SuppressWarnings("unchecked")
@@ -387,6 +392,18 @@ public final class DashboardController {
     private void onOpenNotificationSettings() {
         if (onOpenNotificationSettings != null) {
             onOpenNotificationSettings.run();
+        }
+    }
+
+    /** Injected by App: opens the findings detail panel. */
+    public void setOpenFindingsDetailHandler(Runnable handler) {
+        this.onOpenFindingsDetail = handler;
+    }
+
+    @FXML
+    private void onOpenFindingsDetail() {
+        if (onOpenFindingsDetail != null) {
+            onOpenFindingsDetail.run();
         }
     }
 

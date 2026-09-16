@@ -86,6 +86,16 @@ class ThemeResourceTest {
                         + "to DashboardViewResourceTest's FXML styleClass scan");
     }
 
+    @Test
+    void themeCssDeclaresTheNoteFieldExpandedSelector() {
+        Pattern selector = Pattern.compile("\\.note-field-expanded\\b");
+        assertTrue(selector.matcher(css).find(),
+                "theme.css must declare a .note-field-expanded selector (P3-06 plan §3.4) -- it "
+                        + "is applied/removed in Java on focus gained/lost, so it is invisible to "
+                        + "FindingsDetailViewResourceTest's FXML styleClass scan (the "
+                        + ".drop-zone-active precedent)");
+    }
+
     private static int indexOfRootSelector(String text) {
         Matcher m = Pattern.compile("\\.root\\s*\\{").matcher(text);
         return m.find() ? m.start() : -1;

@@ -16,6 +16,12 @@ import org.junit.jupiter.api.Test;
  * imports. The {@code PackageBoundaryTest} technique, applied inside {@code ui}. Only
  * {@code DashboardController}, the modified {@code App} and {@code AnimationUtils} are allowed
  * to import JavaFX in this item.
+ *
+ * P3-06 adds six: {@code NoteRow}, {@code NoteRows}, {@code NoteEntry}, {@code Notes},
+ * {@code NoteValidation} (the plan's own list, 59 &rarr; 64) plus {@code NoteDeletion} — the
+ * operator-added delete-confirmation gate (65) — a genuinely toolkit-free pure decision, not a
+ * convenience addition. {@code FindingsDetailController} is NOT in this list: like every other
+ * screen controller, it is JavaFX-touching by design.
  */
 class ToolkitFreeSourceTest {
 
@@ -80,7 +86,13 @@ class ToolkitFreeSourceTest {
             "TargetDrop.java",
             "QueueAdmission.java",
             "DroppedTargets.java",
-            "TargetQueue.java");
+            "TargetQueue.java",
+            "NoteRow.java",
+            "NoteRows.java",
+            "NoteEntry.java",
+            "Notes.java",
+            "NoteValidation.java",
+            "NoteDeletion.java");
 
     @Test
     void noneOfTheOrchestrationClassesImportJavaFx() {
@@ -106,9 +118,9 @@ class ToolkitFreeSourceTest {
     }
 
     @Test
-    void exactlyFiftyNineClassesAreChecked() {
-        assertTrue(TOOLKIT_FREE_CLASSES.size() == 59,
-                "expected 59 toolkit-free classes, found " + TOOLKIT_FREE_CLASSES.size());
+    void exactlySixtyFiveClassesAreChecked() {
+        assertTrue(TOOLKIT_FREE_CLASSES.size() == 65,
+                "expected 65 toolkit-free classes, found " + TOOLKIT_FREE_CLASSES.size());
     }
 
     private static boolean violatesImportRule(String line) {

@@ -23,6 +23,23 @@ final class SnapshotRows {
      * asc. Non-probe order: type asc, then subject asc.
      */
     static List<FindingRow> of(List<FindingSnapshot> findings) {
+        List<FindingRow> rows = new ArrayList<>();
+        for (FindingSnapshot finding : ordered(findings)) {
+            rows.add(toRow(finding));
+        }
+        return List.copyOf(rows);
+    }
+
+    /**
+     * THE ordering authority for persisted {@link FindingSnapshot}s (plan R1): probes first
+     * (subject asc, then port NUMERIC asc), then the rest (type asc, then subject asc).
+     * Extracted out of {@link #of(List)} so {@code NoteRows} — the findings-detail screen's row
+     * mapper — shares this ONE ordering implementation instead of a second, copy-pasted
+     * comparator that is free to drift from this one (P1-04's two-sources-of-truth rule).
+     * Package-private: {@code SnapshotRows.of}'s output stays byte-identical, unchanged by this
+     * extraction.
+     */
+    static List<FindingSnapshot> ordered(List<FindingSnapshot> findings) {
         Objects.requireNonNull(findings, "findings");
 
         List<FindingSnapshot> probes = new ArrayList<>();
@@ -42,14 +59,10 @@ final class SnapshotRows {
                 .comparing((FindingSnapshot f) -> f.type().toLowerCase(Locale.ROOT))
                 .thenComparing(f -> f.subject().toLowerCase(Locale.ROOT)));
 
-        List<FindingRow> rows = new ArrayList<>();
-        for (FindingSnapshot probe : probes) {
-            rows.add(toRow(probe));
-        }
-        for (FindingSnapshot nonProbe : nonProbes) {
-            rows.add(toRow(nonProbe));
-        }
-        return List.copyOf(rows);
+        List<FindingSnapshot> result = new ArrayList<>(probes.size() + nonProbes.size());
+        result.addAll(probes);
+        result.addAll(nonProbes);
+        return List.copyOf(result);
     }
 
     /** A finding is a "probe" iff {@code port() != null && state() != null} (P2-11's rule). */

@@ -1,5 +1,6 @@
 package com.argus.ui;
 
+import com.argus.core.AnnotationArchive;
 import com.argus.core.ScanHistory;
 import com.argus.core.Vault;
 import com.argus.core.VaultStore;
@@ -87,6 +88,12 @@ public final class App extends Application {
     /** FX-thread-confined: lazily loaded on first open, then retained. */
     private Parent reportRoot;
 
+    /** FX-thread-confined: assigned on first visit to the findings detail panel. */
+    private FindingsDetailController findingsDetailController;
+
+    /** FX-thread-confined: lazily loaded on first open, then retained. */
+    private Parent findingsDetailRoot;
+
     @Override
     public void start(Stage stage) throws Exception {
         FXMLLoader loader = new FXMLLoader(getClass().getResource("login-view.fxml"));
@@ -112,6 +119,8 @@ public final class App extends Application {
                 dashboardController.setOpenReportHandler(() -> showReport(scene));
                 dashboardController.setOpenNotificationSettingsHandler(
                         () -> showNotificationSettings(scene));
+                dashboardController.setOpenFindingsDetailHandler(
+                        () -> showFindingsDetail(scene));
                 this.desktopNotifier = DesktopNotifiers.create();
                 this.alertChannels = AlertChannels.of(List.of(
                         new DesktopAlertChannel(desktopNotifier),
@@ -284,6 +293,30 @@ public final class App extends Application {
         }
         notificationSettingsController.refresh();
         scene.setRoot(notificationSettingsRoot);
+    }
+
+    /**
+     * Loads {@code findings-detail-view.fxml} once, on first use, and retains it (the
+     * {@link #showReport(Scene)} shape, plan §1's tenth root swap). Every subsequent open reuses
+     * the same root and just calls {@link FindingsDetailController#refresh()}.
+     */
+    private void showFindingsDetail(Scene scene) {
+        if (findingsDetailRoot == null) {
+            try {
+                FXMLLoader findingsDetailLoader =
+                        new FXMLLoader(getClass().getResource("findings-detail-view.fxml"));
+                this.findingsDetailRoot = findingsDetailLoader.load();
+                this.findingsDetailController = findingsDetailLoader.getController();
+                findingsDetailController.setHistory(ScanHistory.atDefaultLocation());
+                findingsDetailController.setNotes(AnnotationArchive.atDefaultLocation());
+                findingsDetailController.setOnClose(() -> scene.setRoot(dashboardRoot));
+            } catch (IOException e) {
+                throw new IllegalStateException(
+                        "failed to load findings-detail-view.fxml", e);
+            }
+        }
+        findingsDetailController.refresh();
+        scene.setRoot(findingsDetailRoot);
     }
 
     /**
