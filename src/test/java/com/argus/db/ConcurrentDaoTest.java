@@ -159,6 +159,47 @@ class ConcurrentDaoTest {
         assertEquals(threadCount, annotationDao.findByFinding(findingId).size());
     }
 
+    @Test
+    void nThreadsAssigningTheSameTagNameToTheSameFindingAllSucceedAndLeaveExactlyOneTagRow()
+            throws Exception {
+        Database database = TempDatabases.open(tempDir);
+        ScanRepository scanRepository = new ScanRepository(database);
+        FindingDao findingDao = new FindingDao(database);
+        TagDao tagDao = new TagDao(database);
+
+        long scanId = scanRepository.insert(NewScan.running("example.com", NOW)).id();
+        findingDao.insertAll(scanId, List.of(NewFinding.port("host", 80, "OPEN")));
+        long findingId = findingDao.findByScan(scanId).get(0).id();
+
+        int threadCount = 8;
+        List<Thread> threads = new ArrayList<>();
+        List<AtomicReference<Exception>> failures = new ArrayList<>();
+        for (int i = 0; i < threadCount; i++) {
+            AtomicReference<Exception> failure = new AtomicReference<>();
+            failures.add(failure);
+            Thread thread = new Thread(() -> {
+                try {
+                    tagDao.assign(findingId, new NewTag("prod"));
+                } catch (Exception e) {
+                    failure.set(e);
+                }
+            });
+            threads.add(thread);
+        }
+
+        for (Thread thread : threads) {
+            thread.start();
+        }
+        for (Thread thread : threads) {
+            thread.join(10_000);
+        }
+
+        for (AtomicReference<Exception> failure : failures) {
+            assertNull(failure.get(), "a thread failed: " + failure.get());
+        }
+        assertEquals(1, tagDao.findByFinding(findingId).size());
+    }
+
     private static List<NewFinding> portFindings(int count) {
         List<NewFinding> findings = new ArrayList<>();
         for (int port = 1; port <= count; port++) {

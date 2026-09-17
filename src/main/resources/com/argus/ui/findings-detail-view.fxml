@@ -9,6 +9,7 @@
 <?import javafx.scene.control.TableColumn?>
 <?import javafx.scene.control.TableView?>
 <?import javafx.scene.control.TextArea?>
+<?import javafx.scene.control.TextField?>
 <?import javafx.scene.layout.BorderPane?>
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.VBox?>
@@ -42,20 +43,39 @@
     </top>
     <center>
         <SplitPane dividerPositions="0.45">
-            <TableView fx:id="findingsTable" styleClass="findings-table">
-                <columns>
-                    <TableColumn text="type" prefWidth="90"/>
-                    <TableColumn text="subject" prefWidth="220"/>
-                    <TableColumn text="port" prefWidth="70"/>
-                    <TableColumn text="state" prefWidth="90"/>
-                </columns>
-                <placeholder>
-                    <Label text="no findings yet — choose a scan and press load"/>
-                </placeholder>
-            </TableView>
+            <VBox spacing="6">
+                <HBox spacing="8" alignment="CENTER_LEFT">
+                    <Label text="filter by tag" styleClass="card-subtitle"/>
+                    <ComboBox fx:id="tagFilterCombo" styleClass="tag-filter" prefWidth="160"/>
+                </HBox>
+                <TableView fx:id="findingsTable" styleClass="findings-table" VBox.vgrow="ALWAYS">
+                    <columns>
+                        <TableColumn text="type" prefWidth="90"/>
+                        <TableColumn text="subject" prefWidth="220"/>
+                        <TableColumn text="port" prefWidth="70"/>
+                        <TableColumn text="state" prefWidth="90"/>
+                    </columns>
+                    <placeholder>
+                        <Label text="no findings yet — choose a scan and press load"/>
+                    </placeholder>
+                </TableView>
+            </VBox>
             <VBox fx:id="detailPane" styleClass="detail-pane" spacing="10" visible="false"
                   managed="false">
                 <VBox fx:id="detailLinesBox" spacing="4"/>
+                <Label fx:id="tagCountLabel" styleClass="card-subtitle"/>
+                <ListView fx:id="tagList" styleClass="tag-list">
+                    <placeholder>
+                        <Label text="no tags on this finding yet"/>
+                    </placeholder>
+                </ListView>
+                <HBox spacing="8">
+                    <TextField fx:id="tagField" styleClass="tag-field" promptText="add a tag…"/>
+                    <Button fx:id="addTagButton" text="add tag" styleClass="primary-button"
+                            onAction="#onAddTag"/>
+                    <Button fx:id="removeTagButton" text="remove tag" styleClass="danger-button"
+                            onAction="#onRemoveTag" disable="true"/>
+                </HBox>
                 <Label fx:id="noteCountLabel" styleClass="card-subtitle"/>
                 <ListView fx:id="notesList" styleClass="note-list" VBox.vgrow="ALWAYS">
                     <placeholder>

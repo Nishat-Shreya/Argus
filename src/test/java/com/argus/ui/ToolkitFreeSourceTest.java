@@ -22,6 +22,9 @@ import org.junit.jupiter.api.Test;
  * operator-added delete-confirmation gate (65) — a genuinely toolkit-free pure decision, not a
  * convenience addition. {@code FindingsDetailController} is NOT in this list: like every other
  * screen controller, it is JavaFX-touching by design.
+ *
+ * P3-07 adds three: {@code Tags}, {@code TagFilter}, {@code TagValidation} (65 &rarr; 68, plan
+ * §5 C7).
  */
 class ToolkitFreeSourceTest {
 
@@ -92,7 +95,10 @@ class ToolkitFreeSourceTest {
             "NoteEntry.java",
             "Notes.java",
             "NoteValidation.java",
-            "NoteDeletion.java");
+            "NoteDeletion.java",
+            "Tags.java",
+            "TagFilter.java",
+            "TagValidation.java");
 
     @Test
     void noneOfTheOrchestrationClassesImportJavaFx() {
@@ -118,9 +124,9 @@ class ToolkitFreeSourceTest {
     }
 
     @Test
-    void exactlySixtyFiveClassesAreChecked() {
-        assertTrue(TOOLKIT_FREE_CLASSES.size() == 65,
-                "expected 65 toolkit-free classes, found " + TOOLKIT_FREE_CLASSES.size());
+    void exactlySixtyEightClassesAreChecked() {
+        assertTrue(TOOLKIT_FREE_CLASSES.size() == 68,
+                "expected 68 toolkit-free classes, found " + TOOLKIT_FREE_CLASSES.size());
     }
 
     private static boolean violatesImportRule(String line) {

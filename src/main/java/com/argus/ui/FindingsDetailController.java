@@ -3,12 +3,15 @@ package com.argus.ui;
 import com.argus.core.AnnotationArchive;
 import com.argus.core.FindingSnapshot;
 import com.argus.core.FindingNote;
+import com.argus.core.FindingTag;
 import com.argus.core.ScanArchiveException;
 import com.argus.core.ScanHistory;
 import com.argus.core.ScanSummary;
+import com.argus.core.TagArchive;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneId;
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -30,6 +33,7 @@ import javafx.scene.control.ListView;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.control.TextArea;
+import javafx.scene.control.TextField;
 import javafx.scene.layout.VBox;
 import javafx.util.StringConverter;
 
@@ -66,11 +70,23 @@ public final class FindingsDetailController {
     @FXML
     private Label unsourceableLabel;
     @FXML
+    private ComboBox<String> tagFilterCombo;
+    @FXML
     private TableView<NoteRow> findingsTable;
     @FXML
     private VBox detailPane;
     @FXML
     private VBox detailLinesBox;
+    @FXML
+    private ListView<FindingTag> tagList;
+    @FXML
+    private TextField tagField;
+    @FXML
+    private Button addTagButton;
+    @FXML
+    private Button removeTagButton;
+    @FXML
+    private Label tagCountLabel;
     @FXML
     private ListView<NoteEntry> notesList;
     @FXML
@@ -87,6 +103,9 @@ public final class FindingsDetailController {
 
     /** Injected by App immediately after the FXML loads. FX-thread-confined. */
     private AnnotationArchive notes;
+
+    /** Injected by App immediately after the FXML loads. FX-thread-confined. */
+    private TagArchive tags;
 
     /** Injected by App: "put the dashboard root back". FX-thread-confined. */
     private Runnable onClose;
@@ -127,6 +146,27 @@ public final class FindingsDetailController {
     /** Whether {@code noteField} is currently expanded. FX-thread-confined, not volatile --
      *  read-then-written, safe only because it is confined to the FX thread (plan §3.4). */
     private boolean noteFieldExpanded;
+
+    /**
+     * Every tag assignment across every finding of {@link #selectedScanId}, prefetched by a
+     * background {@code Task} (plan §4.1). Immutable, the {@link #notesByFindingId} twin.
+     * FX-thread-confined.
+     */
+    private Map<Long, List<FindingTag>> tagsByFindingId = Map.of();
+
+    /** The unfiltered rows of the current load -- what {@link #findingsTable} shows is
+     *  {@code TagFilter.apply(allRows, tagsByFindingId, selectedTagName)} (plan §4.2, R2).
+     *  FX-thread-confined. */
+    private List<NoteRow> allRows = List.of();
+
+    /** The current tag filter choice; {@code null} means {@link Tags#ALL_TAGS} (plan §3.4).
+     *  FX-thread-confined. */
+    private String selectedTagName;
+
+    /** Set while {@link #tagFilterCombo}'s items are rebuilt programmatically, so that rebuild
+     *  does not itself fire a filter pass (plan §3.4). FX-thread-confined, not volatile -- the
+     *  set/read/clear sequence is confined to the FX thread. */
+    private boolean suppressFilterEvents;
 
     @FXML
     @SuppressWarnings("unchecked")
@@ -189,6 +229,32 @@ public final class FindingsDetailController {
         notesList.getSelectionModel().selectedItemProperty().addListener(
                 (obs, oldValue, newValue) -> deleteNoteButton.setDisable(newValue == null));
 
+        tagList.setCellFactory(list -> new ListCell<>() {
+            @Override
+            protected void updateItem(FindingTag item, boolean empty) {
+                super.updateItem(item, empty);
+                if (empty || item == null) {
+                    setText(null);
+                    setGraphic(null);
+                } else {
+                    Label name = new Label(item.name());
+                    name.getStyleClass().add("tag-name");
+                    setGraphic(name);
+                    setText(null);
+                }
+            }
+        });
+        tagList.getSelectionModel().selectedItemProperty().addListener(
+                (obs, oldValue, newValue) -> removeTagButton.setDisable(newValue == null));
+
+        tagFilterCombo.valueProperty().addListener((obs, oldValue, newValue) -> {
+            if (suppressFilterEvents) {
+                return;
+            }
+            selectedTagName = newValue;
+            applyTagFilter();
+        });
+
         noteField.focusedProperty().addListener((obs, wasFocused, isFocused) -> {
             if (isFocused) {
                 expandNoteField();
@@ -206,6 +272,11 @@ public final class FindingsDetailController {
     /** Injected by App immediately after the FXML loads. */
     public void setNotes(AnnotationArchive injectedNotes) {
         this.notes = injectedNotes;
+    }
+
+    /** Injected by App immediately after the FXML loads. */
+    public void setTags(TagArchive injectedTags) {
+        this.tags = injectedTags;
     }
 
     /** Injected by App: "put the dashboard root back". */
@@ -354,8 +425,92 @@ public final class FindingsDetailController {
         return result.isPresent() && result.get() == ButtonType.OK;
     }
 
+    @FXML
+    private void onAddTag() {
+        if (busy || selectedFindingId < 0) {
+            return;
+        }
+        TagValidation.Result result = TagValidation.check(tagField.getText());
+        if (!result.valid()) {
+            showMessage(result.message(), true);
+            AnimationUtils.shake(tagField);
+            return;
+        }
+
+        long findingId = selectedFindingId;
+        String name = result.name();
+        busy = true;
+        clearMessage();
+        setTagControlsDisabled(true);
+
+        Task<FindingTag> task = new Task<>() {
+            @Override
+            protected FindingTag call() throws ScanArchiveException {
+                return tags.add(findingId, name);
+            }
+        };
+
+        task.setOnSucceeded(event -> {
+            tagField.clear();
+            refreshTagsForSelectedFinding();
+        });
+
+        task.setOnFailed(event -> {
+            busy = false;
+            setTagControlsDisabled(false);
+            showMessage("could not save that tag", true);
+            AnimationUtils.shake(tagField);
+        });
+
+        Thread thread = new Thread(task, "argus-tags");
+        thread.setDaemon(true);
+        thread.start();
+    }
+
+    /** No confirmation dialog on removal, unlike {@link #onDeleteNote()} (plan §0.4c, R6): an
+     *  accidentally removed tag costs four keystrokes to re-type, and the operator sees the
+     *  chip disappear immediately. */
+    @FXML
+    private void onRemoveTag() {
+        if (busy) {
+            return;
+        }
+        FindingTag selected = tagList.getSelectionModel().getSelectedItem();
+        if (selected == null) {
+            return;
+        }
+        startRemoveTag(selected.tagId());
+    }
+
+    private void startRemoveTag(long tagId) {
+        long findingId = selectedFindingId;
+        busy = true;
+        clearMessage();
+        setTagControlsDisabled(true);
+
+        Task<Boolean> task = new Task<>() {
+            @Override
+            protected Boolean call() throws ScanArchiveException {
+                return tags.remove(findingId, tagId);
+            }
+        };
+
+        task.setOnSucceeded(event -> refreshTagsForSelectedFinding());
+
+        task.setOnFailed(event -> {
+            busy = false;
+            setTagControlsDisabled(false);
+            showMessage("could not remove that tag", true);
+        });
+
+        Thread thread = new Thread(task, "argus-tags");
+        thread.setDaemon(true);
+        thread.start();
+    }
+
     private void startLoad(long scanId) {
         selectedScanId = scanId;
+        selectedTagName = null;
         clearMessage();
         clearDetail();
         setLoadControlsDisabled(true);
@@ -369,8 +524,8 @@ public final class FindingsDetailController {
         };
 
         task.setOnSucceeded(event -> {
-            List<NoteRow> rows = NoteRows.of(task.getValue());
-            findingsTable.setItems(FXCollections.observableArrayList(rows));
+            allRows = NoteRows.of(task.getValue());
+            applyTagFilter();
             loadNotesForScan(scanId);
         });
 
@@ -395,9 +550,8 @@ public final class FindingsDetailController {
         };
 
         task.setOnSucceeded(event -> {
-            busy = false;
-            setLoadControlsDisabled(false);
             notesByFindingId = Notes.byFinding(task.getValue());
+            loadTagsForScan(scanId);
         });
 
         task.setOnFailed(event -> {
@@ -408,6 +562,38 @@ public final class FindingsDetailController {
         });
 
         Thread thread = new Thread(task, "argus-annotations");
+        thread.setDaemon(true);
+        thread.start();
+    }
+
+    /** The load chain's third step (plan §4.3, R1): the only edit to shipped logic is that the
+     *  {@code busy}/load-controls release moved here from {@link #loadNotesForScan}'s
+     *  {@code setOnSucceeded} -- the same handoff {@link #startLoad} already performs to
+     *  {@link #loadNotesForScan}. */
+    private void loadTagsForScan(long scanId) {
+        Task<List<FindingTag>> task = new Task<>() {
+            @Override
+            protected List<FindingTag> call() throws ScanArchiveException {
+                return tags.listForScan(scanId);
+            }
+        };
+
+        task.setOnSucceeded(event -> {
+            busy = false;
+            setLoadControlsDisabled(false);
+            tagsByFindingId = Tags.byFinding(task.getValue());
+            populateTagFilterCombo();
+            applyTagFilter();
+        });
+
+        task.setOnFailed(event -> {
+            busy = false;
+            setLoadControlsDisabled(false);
+            showMessage("could not load tags for that scan", true);
+            AnimationUtils.shake(root);
+        });
+
+        Thread thread = new Thread(task, "argus-tags");
         thread.setDaemon(true);
         thread.start();
     }
@@ -465,6 +651,69 @@ public final class FindingsDetailController {
         Thread thread = new Thread(task, "argus-annotations");
         thread.setDaemon(true);
         thread.start();
+    }
+
+    /** Re-reads one finding's tags from the archive after an add or a remove succeeds, and
+     *  merges the fresh list into {@link #tagsByFindingId}, then re-derives
+     *  {@link #tagFilterCombo}'s choices and re-applies the filter (plan §4.4, {@code
+     *  loadTagsForScan}'s {@code populateTagFilterCombo(); applyTagFilter();} sequence): a tag
+     *  *removal* can change whether the selected row still satisfies the current filter (e.g.
+     *  removing the very tag the table is filtered on), so {@link #findingsTable}'s items must
+     *  be re-derived here too. Re-filtering may clear the table selection and close the detail
+     *  pane via the existing selection listener -- that is correct (plan §4.2). */
+    private void refreshTagsForSelectedFinding() {
+        long findingId = selectedFindingId;
+
+        Task<List<FindingTag>> task = new Task<>() {
+            @Override
+            protected List<FindingTag> call() throws ScanArchiveException {
+                return tags.listForFinding(findingId);
+            }
+        };
+
+        task.setOnSucceeded(event -> {
+            busy = false;
+            setTagControlsDisabled(false);
+            tagsByFindingId = withFindingTags(tagsByFindingId, findingId, task.getValue());
+            renderTagsList();
+            populateTagFilterCombo();
+            applyTagFilter();
+        });
+
+        task.setOnFailed(event -> {
+            busy = false;
+            setTagControlsDisabled(false);
+            showMessage("could not refresh tags for this finding", true);
+        });
+
+        Thread thread = new Thread(task, "argus-tags");
+        thread.setDaemon(true);
+        thread.start();
+    }
+
+    /** Rebuilds {@link #tagFilterCombo}'s items from every tag currently prefetched, and
+     *  re-selects the preserved choice (plan §4.4) -- {@link #suppressFilterEvents} guards the
+     *  programmatic repopulate from firing a filter pass. */
+    private void populateTagFilterCombo() {
+        List<FindingTag> allTags = new ArrayList<>();
+        for (List<FindingTag> findingTags : tagsByFindingId.values()) {
+            allTags.addAll(findingTags);
+        }
+        List<String> choices = Tags.filterChoices(allTags);
+        String preserved = Tags.preservedSelection(choices, selectedTagName);
+
+        suppressFilterEvents = true;
+        tagFilterCombo.setItems(FXCollections.observableArrayList(choices));
+        tagFilterCombo.getSelectionModel().select(preserved);
+        suppressFilterEvents = false;
+        selectedTagName = preserved;
+    }
+
+    /** The one place {@link #findingsTable}'s items are set -- a pure, no-I/O re-derivation from
+     *  {@link #allRows} and {@link #tagsByFindingId} (plan §4.2). */
+    private void applyTagFilter() {
+        findingsTable.setItems(FXCollections.observableArrayList(
+                TagFilter.apply(allRows, tagsByFindingId, selectedTagName)));
     }
 
     private void onScansLoaded(List<ScanSummary> scans) {
@@ -525,9 +774,18 @@ public final class FindingsDetailController {
             detailLinesBox.getChildren().add(label);
         }
 
+        tagField.clear();
+        renderTagsList();
+
         noteField.clear();
         collapseNoteField();
         renderNotesList();
+    }
+
+    private void renderTagsList() {
+        List<FindingTag> findingTags = tagsByFindingId.getOrDefault(selectedFindingId, List.of());
+        tagList.setItems(FXCollections.observableArrayList(findingTags));
+        tagCountLabel.setText(Tags.tagCountLabel(findingTags.size()));
     }
 
     private void renderNotesList() {
@@ -542,6 +800,10 @@ public final class FindingsDetailController {
         detailPane.setVisible(false);
         detailPane.setManaged(false);
         detailLinesBox.getChildren().clear();
+        tagList.setItems(FXCollections.observableArrayList());
+        tagCountLabel.setText("");
+        tagField.clear();
+        removeTagButton.setDisable(true);
         notesList.setItems(FXCollections.observableArrayList());
         noteCountLabel.setText("");
         noteField.clear();
@@ -574,6 +836,11 @@ public final class FindingsDetailController {
         deleteNoteButton.setDisable(disabled);
     }
 
+    private void setTagControlsDisabled(boolean disabled) {
+        addTagButton.setDisable(disabled);
+        removeTagButton.setDisable(disabled);
+    }
+
     private void showMessage(String text, boolean isError) {
         messageLabel.setText(text);
         messageLabel.getStyleClass().removeAll("form-error", "form-hint");
@@ -591,6 +858,13 @@ public final class FindingsDetailController {
     private static Map<Long, List<FindingNote>> withFindingNotes(
             Map<Long, List<FindingNote>> current, long findingId, List<FindingNote> updated) {
         Map<Long, List<FindingNote>> merged = new LinkedHashMap<>(current);
+        merged.put(findingId, List.copyOf(updated));
+        return Map.copyOf(merged);
+    }
+
+    private static Map<Long, List<FindingTag>> withFindingTags(
+            Map<Long, List<FindingTag>> current, long findingId, List<FindingTag> updated) {
+        Map<Long, List<FindingTag>> merged = new LinkedHashMap<>(current);
         merged.put(findingId, List.copyOf(updated));
         return Map.copyOf(merged);
     }

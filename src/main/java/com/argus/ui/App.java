@@ -2,6 +2,7 @@ package com.argus.ui;
 
 import com.argus.core.AnnotationArchive;
 import com.argus.core.ScanHistory;
+import com.argus.core.TagArchive;
 import com.argus.core.Vault;
 import com.argus.core.VaultStore;
 import com.argus.core.WebhookSender;
@@ -309,6 +310,7 @@ public final class App extends Application {
                 this.findingsDetailController = findingsDetailLoader.getController();
                 findingsDetailController.setHistory(ScanHistory.atDefaultLocation());
                 findingsDetailController.setNotes(AnnotationArchive.atDefaultLocation());
+                findingsDetailController.setTags(TagArchive.atDefaultLocation());
                 findingsDetailController.setOnClose(() -> scene.setRoot(dashboardRoot));
             } catch (IOException e) {
                 throw new IllegalStateException(

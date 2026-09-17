@@ -27,6 +27,7 @@ class ResourceClosureTest {
     private ScanRepository scanRepository;
     private FindingDao findingDao;
     private AnnotationDao annotationDao;
+    private TagDao tagDao;
 
     @BeforeEach
     void setUp() throws Exception {
@@ -39,6 +40,7 @@ class ResourceClosureTest {
         scanRepository = new ScanRepository(database);
         findingDao = new FindingDao(database);
         annotationDao = new AnnotationDao(database);
+        tagDao = new TagDao(database);
     }
 
     @Test
@@ -53,6 +55,8 @@ class ResourceClosureTest {
         findingDao.findByScan(scan.id());
         annotationDao.findByFinding(findingId);
         annotationDao.findByScan(scan.id());
+        tagDao.findByFinding(findingId);
+        tagDao.findByScan(scan.id());
 
         assertTrue(recordingFactory.allClosed());
         assertTrue(recordingFactory.openedCount() > 0);
@@ -67,6 +71,8 @@ class ResourceClosureTest {
         long findingId = findingDao.findByScan(scan.id()).get(0).id();
         AnnotationRecord annotation = annotationDao.insert(findingId, new NewAnnotation("note", NOW));
         annotationDao.deleteById(annotation.id());
+        FindingTagRecord tag = tagDao.assign(findingId, new NewTag("prod"));
+        tagDao.unassign(findingId, tag.tagId());
 
         assertTrue(recordingFactory.allClosed());
     }
@@ -83,6 +89,14 @@ class ResourceClosureTest {
     void aFailedAnnotationInsertStillClosesItsConnection() {
         assertThrows(PersistenceException.class,
                 () -> annotationDao.insert(9999L, new NewAnnotation("note", NOW)));
+
+        assertTrue(assertDoesNotThrowSql(recordingFactory::allClosed));
+    }
+
+    @Test
+    void aFailedAssignStillClosesItsConnection() {
+        assertThrows(PersistenceException.class,
+                () -> tagDao.assign(9999L, new NewTag("prod")));
 
         assertTrue(assertDoesNotThrowSql(recordingFactory::allClosed));
     }

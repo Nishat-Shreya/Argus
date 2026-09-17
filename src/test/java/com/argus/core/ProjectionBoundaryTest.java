@@ -20,12 +20,16 @@ import org.junit.jupiter.api.Test;
  * {@code FindingNote} joins the list in P3-06 (plan R7): a genuine gap being closed, not a
  * convenience edit — a new public {@code core} record on the {@code ui} boundary that was not in
  * this list is exactly the inference hole this test exists to close.
+ *
+ * {@code FindingTag} joins the list in P3-07 (plan R3): same ruling, restated — a new public
+ * {@code core} record on the {@code ui} boundary that is not in this list is exactly the
+ * inference hole this test exists to close.
  */
 class ProjectionBoundaryTest {
 
     private static final List<Class<?>> PROJECTION_TYPES = List.of(
             ScanSummary.class, FindingSnapshot.class, FindingDelta.class, ScanDiffReport.class,
-            ScanComparison.class, FindingNote.class);
+            ScanComparison.class, FindingNote.class, FindingTag.class);
 
     @Test
     void noRecordComponentNamesADbType() {
@@ -56,8 +60,8 @@ class ProjectionBoundaryTest {
     }
 
     @Test
-    void allSixProjectionTypesAreCovered() {
-        assertEquals(6, PROJECTION_TYPES.size());
+    void allSevenProjectionTypesAreCovered() {
+        assertEquals(7, PROJECTION_TYPES.size());
     }
 
     @Test
