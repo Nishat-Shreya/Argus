@@ -1,5 +1,13 @@
 package com.argus.ui;
 
+import com.argus.core.IntelArchive;
+import com.argus.core.IntelReport;
+import com.argus.core.IntelSubject;
+import com.argus.core.KevCatalog;
+import com.argus.core.KevCatalogException;
+import com.argus.core.KevCatalogLoader;
+import com.argus.core.KevMatchResult;
+import com.argus.core.KevScorer;
 import com.argus.core.ScanAlert;
 import com.argus.core.ScanArchive;
 import com.argus.core.ScanArchiveException;
@@ -8,6 +16,7 @@ import com.argus.core.ScanHistory;
 import com.argus.core.ScanSummary;
 import com.argus.core.ScheduledScan;
 import com.argus.core.ScheduledScanArchive;
+import com.argus.core.ThreatIntelClient;
 import java.io.File;
 import java.io.IOException;
 import java.lang.System.Logger.Level;
@@ -186,6 +195,23 @@ public final class DashboardController {
      *  persistent pool needing the full invariant-6 shutdown ladder, not a one-shot Task. */
     private ScheduledExecutorService schedulerPool;
 
+    /** FX-thread-confined; injected by App after unlock (P3-15). Null until then, and null
+     *  forever if {@code -Dargus.intel=false} -- both are "enrichment disabled," not an error. */
+    private ThreatIntelClient intelClient;
+
+    /** FX-thread-confined; constructed once in {@link #initialize()} (cheap, no I/O -- the
+     *  {@code ScanHistory} precedent). */
+    private IntelArchive intelArchive;
+
+    /** Written exactly once, on the FX thread, by the one-shot KEV-catalog-load {@code Task}
+     *  started from {@link #setIntelClient}; read later from a DIFFERENT, always-LATER-started
+     *  background thread per enrichment run. No volatile needed: the write and every later
+     *  {@code Thread.start()} both happen on the FX thread, so plain FX-thread program order
+     *  already orders the write before any read (the {@code history} field precedent in
+     *  {@link #maybeNotify}). Null (KEV scoring skipped that run) until the catalog loads, or
+     *  forever if the load fails -- no retry (the {@code KevCatalogLoader} contract). */
+    private KevScorer kevScorer;
+
     @FXML
     @SuppressWarnings("unchecked")
     private void initialize() {
@@ -250,6 +276,7 @@ public final class DashboardController {
         }, new DefaultScanJobFactory(), ScanArchive.atDefaultLocation()::save);
 
         history = ScanHistory.atDefaultLocation();
+        intelArchive = IntelArchive.atDefaultLocation();
 
         schedulerPool = Executors.newSingleThreadScheduledExecutor(runnable -> {
             Thread thread = new Thread(runnable, "argus-scheduler");
@@ -461,6 +488,43 @@ public final class DashboardController {
         this.scheduledScans = archive;
     }
 
+    /** Injected by App immediately after unlock (P3-15). Honors {@code -Dargus.intel=false} as
+     *  an opt-out (a full target queue would otherwise fire real, unmetered third-party API
+     *  calls after every single scan): when disabled, the client is simply never stored, so
+     *  every enrichment call site's existing null-check makes it a no-op everywhere at once.
+     *  Also kicks off the one-shot KEV catalog load. */
+    public void setIntelClient(ThreatIntelClient client) {
+        if ("false".equalsIgnoreCase(System.getProperty("argus.intel"))) {
+            return;
+        }
+        this.intelClient = client;
+        loadKevCatalogOnce();
+    }
+
+    /** One-shot background load of the public CISA KEV feed (plan: a fresh {@code KevScorer}
+     *  per app run, never refreshed -- {@code KevScorer}'s own contract). No retry: a failed
+     *  load just means KEV scoring is skipped for the rest of this session, exactly as {@code
+     *  KevCatalogLoader} intends (no backoff, no pacing, of any kind). */
+    private void loadKevCatalogOnce() {
+        Task<KevCatalog> task = new Task<>() {
+            @Override
+            protected KevCatalog call() throws KevCatalogException, InterruptedException {
+                return new KevCatalogLoader().load();
+            }
+        };
+        task.setOnSucceeded(event -> {
+            kevScorer = new KevScorer(task.getValue());
+            appendLog("KEV catalog loaded");
+        });
+        task.setOnFailed(event -> appendLog(
+                "KEV catalog load failed · intel enrichment continues without KEV scoring · "
+                        + task.getException().getMessage()));
+
+        Thread thread = new Thread(task, "argus-kev-catalog");
+        thread.setDaemon(true);
+        thread.start();
+    }
+
     /** Called by {@code App.stop()}. Stops the scheduler first -- {@code queueStopped = true}
      *  makes any tick already in flight a no-op, then the pool itself is shut down (invariant
      *  6's ladder) so no new tick can fire -- before closing the coordinator. Idempotent. */
@@ -516,6 +580,7 @@ public final class DashboardController {
         statusLine.setText(resultWord + " · " + savedWord);
 
         maybeNotify(outcome);
+        maybeEnrichIntel(outcome);
         advanceQueue(outcome);
     }
 
@@ -697,6 +762,47 @@ public final class DashboardController {
         Thread thread = new Thread(task, "argus-scan-history");
         thread.setDaemon(true);
         thread.start();
+    }
+
+    /**
+     * P3-15: after a saved, non-cancelled scan, fans the scan's domain target out across the
+     * configured intel sources and scores any CVEs found against the KEV catalog, entirely on a
+     * background daemon thread -- never the FX thread (invariant 3). No-op if no {@code
+     * ThreatIntelClient} was ever injected (locked vault, or {@code -Dargus.intel=false}) or the
+     * scan was not saved (nothing to persist against). Shodan/AbuseIPDB are IP-only and a scan
+     * target is always a domain (unchanged since P1-02), so {@code ThreatIntelClient}'s own
+     * {@code supports()} routing already reports them as {@code UNSUPPORTED_SUBJECT} -- a
+     * visible, honest gap, not a silent one, and not something this method works around.
+     */
+    private void maybeEnrichIntel(ScanOutcome outcome) {
+        if (intelClient == null || !outcome.saved()
+                || !TargetQueue.advancesAfter(outcome.result())) {
+            return;
+        }
+        String target = outcome.run().target();
+        long scanId = outcome.savedScanId();
+        ThreatIntelClient client = intelClient;
+        KevScorer scorer = kevScorer;
+        IntelArchive archive = intelArchive;
+
+        Task<Void> task = new Task<>() {
+            @Override
+            protected Void call() throws InterruptedException, ScanArchiveException {
+                IntelReport report = client.enrich(IntelSubject.domain(target));
+                KevMatchResult kevMatch = scorer == null
+                        ? KevMatchResult.none() : scorer.score(report.allCveIds());
+                archive.save(scanId, report, kevMatch);
+                return null;
+            }
+        };
+
+        task.setOnSucceeded(event -> appendLog("intel enrichment saved for scan #" + scanId));
+        task.setOnFailed(event -> appendLog(
+                "intel enrichment skipped · " + task.getException().getMessage()));
+
+        Thread intelThread = new Thread(task, "argus-intel-enrich");
+        intelThread.setDaemon(true);
+        intelThread.start();
     }
 
     /**

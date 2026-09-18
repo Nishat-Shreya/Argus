@@ -34,9 +34,10 @@ class SchemaTest {
     }
 
     @Test
-    void allSixTablesExist() throws Exception {
+    void allSevenTablesExist() throws Exception {
         Set<String> expected = Set.of(
-                "scans", "findings", "annotations", "tags", "finding_tags", "scheduled_scans");
+                "scans", "findings", "annotations", "tags", "finding_tags", "scheduled_scans",
+                "scan_intel");
         Set<String> actual = new HashSet<>();
         try (Connection c = database.openConnection();
                 Statement st = c.createStatement();
@@ -201,6 +202,37 @@ class SchemaTest {
             st.execute("INSERT INTO tags(name) VALUES ('prod')");
             assertThrows(SQLException.class,
                     () -> st.execute("INSERT INTO tags(name) VALUES ('PROD')"));
+        }
+    }
+
+    @Test
+    void deletingAScanCascadesToItsScanIntelRow() throws Exception {
+        try (Connection c = database.openConnection();
+                Statement st = c.createStatement()) {
+            st.execute("INSERT INTO scans(target, started_at, status) "
+                    + "VALUES ('example.com', 1000, 'RUNNING')");
+            st.execute("INSERT INTO scan_intel(scan_id, summary, kev_matched, created_at) "
+                    + "VALUES (1, 'virustotal: ok', 0, 1000)");
+            st.execute("DELETE FROM scans WHERE id = 1");
+
+            try (ResultSet rs = st.executeQuery("SELECT COUNT(*) FROM scan_intel")) {
+                rs.next();
+                assertEquals(0, rs.getInt(1));
+            }
+        }
+    }
+
+    @Test
+    void scanIntelScanIdIsUnique() throws Exception {
+        try (Connection c = database.openConnection();
+                Statement st = c.createStatement()) {
+            st.execute("INSERT INTO scans(target, started_at, status) "
+                    + "VALUES ('example.com', 1000, 'RUNNING')");
+            st.execute("INSERT INTO scan_intel(scan_id, summary, kev_matched, created_at) "
+                    + "VALUES (1, 'virustotal: ok', 0, 1000)");
+            assertThrows(SQLException.class, () -> st.execute(
+                    "INSERT INTO scan_intel(scan_id, summary, kev_matched, created_at) "
+                            + "VALUES (1, 'another summary', 0, 1001)"));
         }
     }
 }

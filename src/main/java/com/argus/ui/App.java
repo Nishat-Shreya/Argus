@@ -1,11 +1,17 @@
 package com.argus.ui;
 
+import com.argus.core.AbuseIpdbSource;
 import com.argus.core.AnnotationArchive;
+import com.argus.core.CensysSource;
+import com.argus.core.EmailSender;
 import com.argus.core.ScanHistory;
 import com.argus.core.ScheduledScanArchive;
+import com.argus.core.ShodanSource;
 import com.argus.core.TagArchive;
+import com.argus.core.ThreatIntelClient;
 import com.argus.core.Vault;
 import com.argus.core.VaultStore;
+import com.argus.core.VirusTotalSource;
 import com.argus.core.WebhookSender;
 import java.io.IOException;
 import java.lang.System.Logger.Level;
@@ -44,6 +50,12 @@ public final class App extends Application {
      *  vault, so the pool must be joined before the vault is closed. Defaults to the no-op
      *  fallback so a shutdown before unlock is safe. */
     private AlertChannel alertChannels = AlertChannels.none();
+
+    /** FX-thread-confined: built once, after unlock, from the four vault-backed intel sources
+     *  (P3-15); closed by {@link #stop()} before the vault. Null until unlock -- the dashboard
+     *  treats a null client as "enrichment disabled" and no-ops. Construction does no I/O (it
+     *  only builds a thread pool); each source reads its own key from the vault per query. */
+    private ThreatIntelClient intelClient;
 
     /** FX-thread-confined: assigned on first visit to the notifications settings panel. */
     private NotificationSettingsController notificationSettingsController;
@@ -132,11 +144,19 @@ public final class App extends Application {
                 dashboardController.setOpenScheduledScansHandler(
                         () -> showScheduledScans(scene));
                 dashboardController.setScheduledScans(ScheduledScanArchive.atDefaultLocation());
+                this.intelClient = new ThreatIntelClient(List.of(
+                        new VirusTotalSource(unlockedVault),
+                        new ShodanSource(unlockedVault),
+                        new AbuseIpdbSource(unlockedVault),
+                        new CensysSource(unlockedVault)));
+                dashboardController.setIntelClient(intelClient);
                 this.desktopNotifier = DesktopNotifiers.create();
                 this.alertChannels = AlertChannels.of(List.of(
                         new DesktopAlertChannel(desktopNotifier),
                         new WebhookAlertChannel(WebhookSettings.fromVault(unlockedVault),
-                                new WebhookSender())));
+                                new WebhookSender()),
+                        new EmailAlertChannel(EmailSettings.fromVault(unlockedVault),
+                                new EmailSender())));
                 dashboardController.setAlertChannel(alertChannels);
                 scene.setRoot(dashboardRoot);
             } catch (IOException e) {
@@ -362,8 +382,10 @@ public final class App extends Application {
      * desktop-notifier's OS resource (P3-02 §3.7 — the tray icon must be gone before the FX
      * toolkit winds down, or AWT's non-daemon helper threads can keep the JVM alive, JDK-6412791;
      * this is {@code App.stop()}, not a shutdown hook, for the reason JDK-8042114 warns about),
-     * then closes the vault, if one was ever unlocked — the zeroization-at-app-close tie-in
-     * (plan §4.6). Scan first, alert channels second, notifier third, vault fourth: stop the
+     * then closes the intel client (P3-15 -- an in-flight query reading a closed vault just
+     * surfaces as a benign FAILED outcome, same as any other network failure), then closes the
+     * vault, if one was ever unlocked — the zeroization-at-app-close tie-in (plan §4.6). Scan
+     * first, alert channels second, notifier third, intel client fourth, vault fifth: stop the
      * work, join anything that might still touch the vault, release the OS resource, then
      * release the credential.
      */
@@ -374,6 +396,9 @@ public final class App extends Application {
         }
         alertChannels.close();
         desktopNotifier.close();
+        if (intelClient != null) {
+            intelClient.close();
+        }
         if (vault != null) {
             try {
                 vault.close();

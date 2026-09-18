@@ -15,7 +15,7 @@ final class Schema {
     private Schema() {}
 
     /**
-     * Idempotent: {@code CREATE TABLE}/{@code CREATE INDEX ... IF NOT EXISTS} for all six
+     * Idempotent: {@code CREATE TABLE}/{@code CREATE INDEX ... IF NOT EXISTS} for all seven
      * tables, run in one transaction, followed by stamping {@code PRAGMA user_version}
      * (executed outside the transaction — plan §7.7).
      */
@@ -98,6 +98,17 @@ final class Schema {
                             next_run_at     INTEGER,
                             CHECK (length(target) > 0),
                             CHECK (length(cron_expression) > 0)
+                        )
+                        """);
+
+                statement.execute("""
+                        CREATE TABLE IF NOT EXISTS scan_intel (
+                            id          INTEGER PRIMARY KEY,
+                            scan_id     INTEGER NOT NULL UNIQUE REFERENCES scans(id) ON DELETE CASCADE,
+                            summary     TEXT    NOT NULL,
+                            kev_matched INTEGER NOT NULL DEFAULT 0 CHECK (kev_matched IN (0, 1)),
+                            created_at  INTEGER NOT NULL,
+                            CHECK (length(summary) > 0)
                         )
                         """);
             }
