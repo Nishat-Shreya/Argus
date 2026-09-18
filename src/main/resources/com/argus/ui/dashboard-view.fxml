@@ -44,6 +44,8 @@
                     onAction="#onOpenNotificationSettings"/>
             <Button fx:id="findingsButton" text="findings" styleClass="secondary-button"
                     onAction="#onOpenFindingsDetail"/>
+            <Button fx:id="scheduledScansButton" text="schedules" styleClass="secondary-button"
+                    onAction="#onOpenScheduledScans"/>
             <Circle fx:id="liveDot" radius="5" styleClass="live-dot"/>
             <Label fx:id="messageLabel" styleClass="form-error" visible="false" managed="false"
                    wrapText="true"/>

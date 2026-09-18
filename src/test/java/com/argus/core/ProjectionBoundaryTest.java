@@ -24,12 +24,14 @@ import org.junit.jupiter.api.Test;
  * {@code FindingTag} joins the list in P3-07 (plan R3): same ruling, restated — a new public
  * {@code core} record on the {@code ui} boundary that is not in this list is exactly the
  * inference hole this test exists to close.
+ *
+ * {@code ScheduledScan} joins the list in P3-08: same ruling, restated again.
  */
 class ProjectionBoundaryTest {
 
     private static final List<Class<?>> PROJECTION_TYPES = List.of(
             ScanSummary.class, FindingSnapshot.class, FindingDelta.class, ScanDiffReport.class,
-            ScanComparison.class, FindingNote.class, FindingTag.class);
+            ScanComparison.class, FindingNote.class, FindingTag.class, ScheduledScan.class);
 
     @Test
     void noRecordComponentNamesADbType() {
@@ -60,8 +62,8 @@ class ProjectionBoundaryTest {
     }
 
     @Test
-    void allSevenProjectionTypesAreCovered() {
-        assertEquals(7, PROJECTION_TYPES.size());
+    void allEightProjectionTypesAreCovered() {
+        assertEquals(8, PROJECTION_TYPES.size());
     }
 
     @Test

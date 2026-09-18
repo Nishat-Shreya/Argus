@@ -25,6 +25,10 @@ import org.junit.jupiter.api.Test;
  *
  * P3-07 adds three: {@code Tags}, {@code TagFilter}, {@code TagValidation} (65 &rarr; 68, plan
  * §5 C7).
+ *
+ * P3-08 adds three: {@code ScheduledScanValidation}, {@code ScheduledScanRow}, {@code
+ * ScheduledScanRows} (68 &rarr; 71). {@code ScheduledScansController} is NOT in this list: like
+ * every other screen controller, it is JavaFX-touching by design.
  */
 class ToolkitFreeSourceTest {
 
@@ -98,7 +102,10 @@ class ToolkitFreeSourceTest {
             "NoteDeletion.java",
             "Tags.java",
             "TagFilter.java",
-            "TagValidation.java");
+            "TagValidation.java",
+            "ScheduledScanValidation.java",
+            "ScheduledScanRow.java",
+            "ScheduledScanRows.java");
 
     @Test
     void noneOfTheOrchestrationClassesImportJavaFx() {
@@ -124,9 +131,9 @@ class ToolkitFreeSourceTest {
     }
 
     @Test
-    void exactlySixtyEightClassesAreChecked() {
-        assertTrue(TOOLKIT_FREE_CLASSES.size() == 68,
-                "expected 68 toolkit-free classes, found " + TOOLKIT_FREE_CLASSES.size());
+    void exactlySeventyOneClassesAreChecked() {
+        assertTrue(TOOLKIT_FREE_CLASSES.size() == 71,
+                "expected 71 toolkit-free classes, found " + TOOLKIT_FREE_CLASSES.size());
     }
 
     private static boolean violatesImportRule(String line) {

@@ -6,14 +6,21 @@ import com.argus.core.ScanArchiveException;
 import com.argus.core.ScanComparison;
 import com.argus.core.ScanHistory;
 import com.argus.core.ScanSummary;
+import com.argus.core.ScheduledScan;
+import com.argus.core.ScheduledScanArchive;
 import java.io.File;
 import java.io.IOException;
+import java.lang.System.Logger.Level;
 import java.nio.file.Path;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 import javafx.animation.FadeTransition;
 import javafx.application.Platform;
 import javafx.beans.property.ReadOnlyStringWrapper;
@@ -43,7 +50,14 @@ import javafx.scene.shape.Circle;
  */
 public final class DashboardController {
 
+    private static final System.Logger LOGGER =
+            System.getLogger(DashboardController.class.getName());
+
     private static final int LOG_CAPACITY = 2000;
+
+    /** How often the recurring-scan check runs (plan: an in-app timer, not an OS-level
+     *  scheduler -- schedules only fire while Argus is running). */
+    private static final long SCHEDULER_PERIOD_SECONDS = 30;
 
     @FXML
     private HBox toolbar;
@@ -71,6 +85,8 @@ public final class DashboardController {
     private Button notificationsButton;
     @FXML
     private Button findingsButton;
+    @FXML
+    private Button scheduledScansButton;
     @FXML
     private Circle liveDot;
     @FXML
@@ -157,6 +173,19 @@ public final class DashboardController {
     /** FX-thread-confined; opens the findings detail panel (P3-06, the 8th nav button). */
     private Runnable onOpenFindingsDetail;
 
+    /** FX-thread-confined; opens the scheduled-scans panel (P3-08, the 9th nav button). */
+    private Runnable onOpenScheduledScans;
+
+    /** FX-thread-confined; injected by App after unlock. Defaults to null: the scheduler tick
+     *  no-ops until it is set, which happens synchronously right after this controller loads
+     *  and well before the dashboard is ever shown. */
+    private ScheduledScanArchive scheduledScans;
+
+    /** One background daemon thread, ticking every {@link #SCHEDULER_PERIOD_SECONDS} (plan:
+     *  the in-app scheduler for P3-08) -- the {@code WebhookAlertChannel} precedent for a
+     *  persistent pool needing the full invariant-6 shutdown ladder, not a one-shot Task. */
+    private ScheduledExecutorService schedulerPool;
+
     @FXML
     @SuppressWarnings("unchecked")
     private void initialize() {
@@ -221,6 +250,14 @@ public final class DashboardController {
         }, new DefaultScanJobFactory(), ScanArchive.atDefaultLocation()::save);
 
         history = ScanHistory.atDefaultLocation();
+
+        schedulerPool = Executors.newSingleThreadScheduledExecutor(runnable -> {
+            Thread thread = new Thread(runnable, "argus-scheduler");
+            thread.setDaemon(true);
+            return thread;
+        });
+        schedulerPool.scheduleWithFixedDelay(this::checkScheduledScans,
+                SCHEDULER_PERIOD_SECONDS, SCHEDULER_PERIOD_SECONDS, TimeUnit.SECONDS);
     }
 
     @FXML
@@ -407,11 +444,43 @@ public final class DashboardController {
         }
     }
 
-    /** Called by {@code App.stop()}. Closes the coordinator. Idempotent. */
+    /** Injected by App: opens the scheduled-scans panel. */
+    public void setOpenScheduledScansHandler(Runnable handler) {
+        this.onOpenScheduledScans = handler;
+    }
+
+    @FXML
+    private void onOpenScheduledScans() {
+        if (onOpenScheduledScans != null) {
+            onOpenScheduledScans.run();
+        }
+    }
+
+    /** Injected by App immediately after this controller loads. */
+    public void setScheduledScans(ScheduledScanArchive archive) {
+        this.scheduledScans = archive;
+    }
+
+    /** Called by {@code App.stop()}. Stops the scheduler first -- {@code queueStopped = true}
+     *  makes any tick already in flight a no-op, then the pool itself is shut down (invariant
+     *  6's ladder) so no new tick can fire -- before closing the coordinator. Idempotent. */
     public void shutdown() {
         queueStopped = true;
+        shutdownSchedulerPool();
         stopLiveDot();
         coordinator.close();
+    }
+
+    private void shutdownSchedulerPool() {
+        schedulerPool.shutdown();
+        try {
+            if (!schedulerPool.awaitTermination(5, TimeUnit.SECONDS)) {
+                schedulerPool.shutdownNow();
+            }
+        } catch (InterruptedException e) {
+            schedulerPool.shutdownNow();
+            Thread.currentThread().interrupt();
+        }
     }
 
     /** Injected by App: the alert fan-out (P3-03 §3.6). REPLACES P3-02's
@@ -628,6 +697,61 @@ public final class DashboardController {
         Thread thread = new Thread(task, "argus-scan-history");
         thread.setDaemon(true);
         thread.start();
+    }
+
+    /**
+     * Runs on {@code argus-scheduler}, NEVER the FX thread. Reads due schedules, records each
+     * one as run BEFORE asking the FX thread to actually start it -- so a tick landing again
+     * before the {@code runLater} below is processed can never re-trigger the same due
+     * schedule twice (plan: this trades "next run advances at trigger time" for "no
+     * double-fire," the simplest correct choice for a single-operator tool). Any failure here
+     * is logged and retried on the next tick -- a scheduling hiccup must never crash this
+     * thread or the scan pipeline.
+     */
+    private void checkScheduledScans() {
+        if (scheduledScans == null) {
+            return;
+        }
+        List<ScheduledScan> due;
+        try {
+            due = scheduledScans.due(Instant.now());
+        } catch (ScanArchiveException e) {
+            LOGGER.log(Level.WARNING, "could not read scheduled scans", e);
+            return;
+        }
+        for (ScheduledScan schedule : due) {
+            try {
+                scheduledScans.recordRun(schedule.id(), schedule.intervalMinutes(), Instant.now());
+            } catch (ScanArchiveException e) {
+                LOGGER.log(Level.WARNING,
+                        "could not record run for scheduled scan " + schedule.id(), e);
+                continue;
+            }
+            String target = schedule.target();
+            Platform.runLater(() -> triggerScheduledScan(target));
+        }
+    }
+
+    /**
+     * FX thread. Reuses the exact same start path as the typed {@code scan} button and queue
+     * advancement: if nothing is running, start it now; if a scan is already running, admit it
+     * to the existing target queue so it runs once the current scan finishes (plan: reuse
+     * {@code TargetQueue}/{@code startScan}, no second scan-launching path). No-op once the
+     * dashboard is shutting down.
+     */
+    private void triggerScheduledScan(String target) {
+        if (queueStopped) {
+            return;
+        }
+        if (coordinator.isRunning()) {
+            targetQueue.admit(new TargetDrop(List.of(target), List.of()), activeTarget);
+            refreshQueueView();
+            updateQueueControls();
+            appendLog("scheduled scan queued · " + target);
+        } else {
+            appendLog("scheduled scan starting · " + target);
+            startScan(target);
+        }
     }
 
     private void updateWorkerRow(WorkerStatus status) {

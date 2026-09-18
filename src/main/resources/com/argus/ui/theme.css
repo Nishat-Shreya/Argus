@@ -816,3 +816,7 @@
     -fx-prompt-text-fill: -argus-text-muted;
     -fx-padding: 8;
 }
+
+.scheduled-scans-root {
+    -fx-background-color: -argus-bg-base;
+}

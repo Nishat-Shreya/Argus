@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.TableColumn?>
+<?import javafx.scene.control.TableView?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.VBox?>
+
+<BorderPane xmlns="http://javafx.com/javafx/21"
+            xmlns:fx="http://javafx.com/fxml/1"
+            fx:controller="com.argus.ui.ScheduledScansController"
+            styleClass="scheduled-scans-root">
+    <top>
+        <HBox styleClass="toolbar" alignment="CENTER_LEFT" spacing="10">
+            <Label text="scheduled scans" styleClass="card-title"/>
+            <Button fx:id="backButton" text="back to dashboard" styleClass="secondary-button"
+                    onAction="#onBack"/>
+        </HBox>
+    </top>
+    <center>
+        <HBox spacing="16">
+            <TableView fx:id="scheduleTable" styleClass="key-table">
+                <columns>
+                    <TableColumn text="target" prefWidth="200"/>
+                    <TableColumn text="interval" prefWidth="120"/>
+                    <TableColumn text="status" prefWidth="90"/>
+                    <TableColumn text="last run" prefWidth="150"/>
+                    <TableColumn text="next run" prefWidth="150"/>
+                </columns>
+                <placeholder>
+                    <Label text="no scheduled scans yet"/>
+                </placeholder>
+            </TableView>
+            <VBox fx:id="card" styleClass="key-editor" spacing="10">
+                <Label text="add a schedule" styleClass="card-subtitle"/>
+                <TextField fx:id="targetField" promptText="target domain" styleClass="field"/>
+                <TextField fx:id="intervalField" promptText="every N minutes" styleClass="field"/>
+                <Button fx:id="addButton" text="add" styleClass="primary-button"
+                        onAction="#onAdd"/>
+                <HBox spacing="10">
+                    <Button fx:id="toggleEnabledButton" text="enable / disable"
+                            styleClass="secondary-button" onAction="#onToggleEnabled"
+                            disable="true"/>
+                    <Button fx:id="removeButton" text="remove" styleClass="danger-button"
+                            onAction="#onRemove" disable="true"/>
+                </HBox>
+                <Label fx:id="messageLabel" styleClass="form-hint" visible="false" managed="false"
+                       wrapText="true"/>
+            </VBox>
+        </HBox>
+    </center>
+</BorderPane>

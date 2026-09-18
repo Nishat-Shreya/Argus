@@ -2,6 +2,7 @@ package com.argus.ui;
 
 import com.argus.core.AnnotationArchive;
 import com.argus.core.ScanHistory;
+import com.argus.core.ScheduledScanArchive;
 import com.argus.core.TagArchive;
 import com.argus.core.Vault;
 import com.argus.core.VaultStore;
@@ -95,6 +96,12 @@ public final class App extends Application {
     /** FX-thread-confined: lazily loaded on first open, then retained. */
     private Parent findingsDetailRoot;
 
+    /** FX-thread-confined: assigned on first visit to the scheduled-scans panel. */
+    private ScheduledScansController scheduledScansController;
+
+    /** FX-thread-confined: lazily loaded on first open, then retained. */
+    private Parent scheduledScansRoot;
+
     @Override
     public void start(Stage stage) throws Exception {
         FXMLLoader loader = new FXMLLoader(getClass().getResource("login-view.fxml"));
@@ -122,6 +129,9 @@ public final class App extends Application {
                         () -> showNotificationSettings(scene));
                 dashboardController.setOpenFindingsDetailHandler(
                         () -> showFindingsDetail(scene));
+                dashboardController.setOpenScheduledScansHandler(
+                        () -> showScheduledScans(scene));
+                dashboardController.setScheduledScans(ScheduledScanArchive.atDefaultLocation());
                 this.desktopNotifier = DesktopNotifiers.create();
                 this.alertChannels = AlertChannels.of(List.of(
                         new DesktopAlertChannel(desktopNotifier),
@@ -319,6 +329,29 @@ public final class App extends Application {
         }
         findingsDetailController.refresh();
         scene.setRoot(findingsDetailRoot);
+    }
+
+    /**
+     * Loads {@code scheduled-scans-view.fxml} once, on first use, and retains it (the
+     * {@link #showFindingsDetail(Scene)} shape, the eleventh root swap). Every subsequent open
+     * reuses the same root and just calls {@link ScheduledScansController#refresh()}.
+     */
+    private void showScheduledScans(Scene scene) {
+        if (scheduledScansRoot == null) {
+            try {
+                FXMLLoader scheduledScansLoader =
+                        new FXMLLoader(getClass().getResource("scheduled-scans-view.fxml"));
+                this.scheduledScansRoot = scheduledScansLoader.load();
+                this.scheduledScansController = scheduledScansLoader.getController();
+                scheduledScansController.setArchive(ScheduledScanArchive.atDefaultLocation());
+                scheduledScansController.setOnClose(() -> scene.setRoot(dashboardRoot));
+            } catch (IOException e) {
+                throw new IllegalStateException(
+                        "failed to load scheduled-scans-view.fxml", e);
+            }
+        }
+        scheduledScansController.refresh();
+        scene.setRoot(scheduledScansRoot);
     }
 
     /**

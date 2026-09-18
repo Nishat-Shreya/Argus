@@ -28,6 +28,7 @@ class ResourceClosureTest {
     private FindingDao findingDao;
     private AnnotationDao annotationDao;
     private TagDao tagDao;
+    private ScheduledScanDao scheduledScanDao;
 
     @BeforeEach
     void setUp() throws Exception {
@@ -41,6 +42,7 @@ class ResourceClosureTest {
         findingDao = new FindingDao(database);
         annotationDao = new AnnotationDao(database);
         tagDao = new TagDao(database);
+        scheduledScanDao = new ScheduledScanDao(database);
     }
 
     @Test
@@ -57,6 +59,7 @@ class ResourceClosureTest {
         annotationDao.findByScan(scan.id());
         tagDao.findByFinding(findingId);
         tagDao.findByScan(scan.id());
+        scheduledScanDao.findAll();
 
         assertTrue(recordingFactory.allClosed());
         assertTrue(recordingFactory.openedCount() > 0);
@@ -73,6 +76,11 @@ class ResourceClosureTest {
         annotationDao.deleteById(annotation.id());
         FindingTagRecord tag = tagDao.assign(findingId, new NewTag("prod"));
         tagDao.unassign(findingId, tag.tagId());
+        ScheduledScanRecord schedule = scheduledScanDao.insert(
+                new NewScheduledScan("example.net", "15", NOW, NOW.plusSeconds(900)));
+        scheduledScanDao.setEnabled(schedule.id(), false);
+        scheduledScanDao.recordRun(schedule.id(), NOW, NOW.plusSeconds(1800));
+        scheduledScanDao.delete(schedule.id());
 
         assertTrue(recordingFactory.allClosed());
     }

@@ -200,6 +200,42 @@ class ConcurrentDaoTest {
         assertEquals(1, tagDao.findByFinding(findingId).size());
     }
 
+    @Test
+    void nThreadsInsertingDistinctSchedulesThroughOneDaoAllSucceed() throws Exception {
+        Database database = TempDatabases.open(tempDir);
+        ScheduledScanDao scheduledScanDao = new ScheduledScanDao(database);
+
+        int threadCount = 8;
+        List<Thread> threads = new ArrayList<>();
+        List<AtomicReference<Exception>> failures = new ArrayList<>();
+        for (int i = 0; i < threadCount; i++) {
+            int index = i;
+            AtomicReference<Exception> failure = new AtomicReference<>();
+            failures.add(failure);
+            Thread thread = new Thread(() -> {
+                try {
+                    scheduledScanDao.insert(new NewScheduledScan(
+                            "target-" + index + ".example.com", "15", NOW, NOW.plusSeconds(900)));
+                } catch (Exception e) {
+                    failure.set(e);
+                }
+            });
+            threads.add(thread);
+        }
+
+        for (Thread thread : threads) {
+            thread.start();
+        }
+        for (Thread thread : threads) {
+            thread.join(10_000);
+        }
+
+        for (AtomicReference<Exception> failure : failures) {
+            assertNull(failure.get(), "a thread failed: " + failure.get());
+        }
+        assertEquals(threadCount, scheduledScanDao.findAll().size());
+    }
+
     private static List<NewFinding> portFindings(int count) {
         List<NewFinding> findings = new ArrayList<>();
         for (int port = 1; port <= count; port++) {
