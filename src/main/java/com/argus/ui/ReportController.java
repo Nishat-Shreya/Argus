@@ -43,6 +43,8 @@ public final class ReportController {
     @FXML
     private Button exportButton;
     @FXML
+    private Button exportPdfButton;
+    @FXML
     private Button backButton;
     @FXML
     private Label targetLabel;
@@ -194,6 +196,7 @@ public final class ReportController {
         clearMessage();
         previewButton.setDisable(true);
         exportButton.setDisable(true);
+        exportPdfButton.setDisable(true);
 
         Task<List<FindingSnapshot>> task = new Task<>() {
             @Override
@@ -248,10 +251,7 @@ public final class ReportController {
         String html = HtmlReport.render(currentModel);
         java.nio.file.Path path = chosen.toPath();
 
-        busy = true;
-        clearMessage();
-        exportButton.setDisable(true);
-
+        beginExport();
         Task<Void> task = new Task<>() {
             @Override
             protected Void call() throws java.io.IOException {
@@ -259,23 +259,75 @@ public final class ReportController {
                 return null;
             }
         };
-
-        task.setOnSucceeded(event -> {
-            busy = false;
-            exportButton.setDisable(false);
-            showMessage("exported to " + path, false);
-        });
-
-        task.setOnFailed(event -> {
-            busy = false;
-            exportButton.setDisable(false);
-            showMessage("could not write the report to that location", true);
-            AnimationUtils.shake(root);
-        });
+        task.setOnSucceeded(event -> endExport("exported to " + path));
+        task.setOnFailed(event -> failExport());
 
         Thread thread = new Thread(task, "argus-report-export");
         thread.setDaemon(true);
         thread.start();
+    }
+
+    /** The {@link #onExport} shape, reusing {@link PdfReport} instead of {@link HtmlReport} --
+     *  same {@link ReportModel}, same {@code argus-report-export} thread, same busy/message
+     *  handling (P3-18). */
+    @FXML
+    private void onExportPdf() {
+        if (busy || model == null) {
+            return;
+        }
+        ReportModel currentModel = model;
+        FileChooser chooser = new FileChooser();
+        chooser.setTitle("export report");
+        chooser.setInitialFileName(
+                Reports.suggestedFileName(currentModel).replace(".html", ".pdf"));
+        chooser.getExtensionFilters().add(
+                new FileChooser.ExtensionFilter("PDF document", "*.pdf"));
+
+        Window window = root.getScene() == null ? null : root.getScene().getWindow();
+        File chosen = chooser.showSaveDialog(window);
+        if (chosen == null) {
+            return;
+        }
+
+        byte[] pdf = PdfReport.render(currentModel);
+        java.nio.file.Path path = chosen.toPath();
+
+        beginExport();
+        Task<Void> task = new Task<>() {
+            @Override
+            protected Void call() throws java.io.IOException {
+                ReportFiles.write(path, pdf);
+                return null;
+            }
+        };
+        task.setOnSucceeded(event -> endExport("exported to " + path));
+        task.setOnFailed(event -> failExport());
+
+        Thread thread = new Thread(task, "argus-report-export");
+        thread.setDaemon(true);
+        thread.start();
+    }
+
+    private void beginExport() {
+        busy = true;
+        clearMessage();
+        exportButton.setDisable(true);
+        exportPdfButton.setDisable(true);
+    }
+
+    private void endExport(String message) {
+        busy = false;
+        exportButton.setDisable(false);
+        exportPdfButton.setDisable(false);
+        showMessage(message, false);
+    }
+
+    private void failExport() {
+        busy = false;
+        exportButton.setDisable(false);
+        exportPdfButton.setDisable(false);
+        showMessage("could not write the report to that location", true);
+        AnimationUtils.shake(root);
     }
 
     @FXML
@@ -357,6 +409,7 @@ public final class ReportController {
         summaryLabel.setText(builtModel.summaryLine());
         findingsTable.setItems(FXCollections.observableArrayList(builtModel.rows()));
         exportButton.setDisable(false);
+        exportPdfButton.setDisable(false);
     }
 
     private void clearPreview() {
@@ -366,6 +419,7 @@ public final class ReportController {
         summaryLabel.setText(null);
         findingsTable.setItems(FXCollections.observableArrayList());
         exportButton.setDisable(true);
+        exportPdfButton.setDisable(true);
     }
 
     private void showMessage(String text, boolean isError) {

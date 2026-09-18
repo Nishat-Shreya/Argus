@@ -29,6 +29,11 @@ import org.junit.jupiter.api.Test;
  * P3-08 adds three: {@code ScheduledScanValidation}, {@code ScheduledScanRow}, {@code
  * ScheduledScanRows} (68 &rarr; 71). {@code ScheduledScansController} is NOT in this list: like
  * every other screen controller, it is JavaFX-touching by design.
+ *
+ * P3-18 adds one: {@code PdfReport} (71 &rarr; 72), the {@code HtmlReport} twin.
+ *
+ * P3-17 adds two: {@code EmailAlertChannel}, {@code EmailSettings} (72 &rarr; 74), the {@code
+ * WebhookAlertChannel}/{@code WebhookSettings} twins.
  */
 class ToolkitFreeSourceTest {
 
@@ -85,8 +90,11 @@ class ToolkitFreeSourceTest {
             "DesktopAlertChannel.java",
             "WebhookAlertChannel.java",
             "WebhookSettings.java",
+            "EmailAlertChannel.java",
+            "EmailSettings.java",
             "ReportModel.java",
             "HtmlReport.java",
+            "PdfReport.java",
             "Reports.java",
             "ReportFiles.java",
             "DroppedContent.java",
@@ -131,9 +139,9 @@ class ToolkitFreeSourceTest {
     }
 
     @Test
-    void exactlySeventyOneClassesAreChecked() {
-        assertTrue(TOOLKIT_FREE_CLASSES.size() == 71,
-                "expected 71 toolkit-free classes, found " + TOOLKIT_FREE_CLASSES.size());
+    void exactlySeventyFourClassesAreChecked() {
+        assertTrue(TOOLKIT_FREE_CLASSES.size() == 74,
+                "expected 74 toolkit-free classes, found " + TOOLKIT_FREE_CLASSES.size());
     }
 
     private static boolean violatesImportRule(String line) {

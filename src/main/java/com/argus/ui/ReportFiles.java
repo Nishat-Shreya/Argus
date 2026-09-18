@@ -25,4 +25,13 @@ final class ReportFiles {
         Files.writeString(file, html, StandardCharsets.UTF_8, StandardOpenOption.CREATE,
                 StandardOpenOption.TRUNCATE_EXISTING, StandardOpenOption.WRITE);
     }
+
+    /** Writes raw {@code bytes} to {@code file}, creating or truncating (P3-18: a PDF's bytes
+     *  are already its exact final encoding -- no charset applies). */
+    static void write(Path file, byte[] bytes) throws IOException {
+        Objects.requireNonNull(file, "file");
+        Objects.requireNonNull(bytes, "bytes");
+        Files.write(file, bytes, StandardOpenOption.CREATE,
+                StandardOpenOption.TRUNCATE_EXISTING, StandardOpenOption.WRITE);
+    }
 }

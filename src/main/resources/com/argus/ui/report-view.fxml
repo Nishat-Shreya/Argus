@@ -21,7 +21,7 @@
                 <VBox spacing="4">
                     <Label text="report export" styleClass="card-title"/>
                     <Label styleClass="card-subtitle" wrapText="true"
-                           text="exports one completed scan's findings as a standalone HTML document — not a diff"/>
+                           text="exports one completed scan's findings as a standalone HTML or PDF document — not a diff"/>
                 </VBox>
                 <VBox spacing="4">
                     <Label text="scan" styleClass="card-subtitle"/>
@@ -32,8 +32,10 @@
                 </VBox>
                 <Button fx:id="previewButton" text="preview" styleClass="primary-button"
                         onAction="#onPreview"/>
-                <Button fx:id="exportButton" text="export" styleClass="secondary-button"
+                <Button fx:id="exportButton" text="export html" styleClass="secondary-button"
                         onAction="#onExport" disable="true"/>
+                <Button fx:id="exportPdfButton" text="export pdf" styleClass="secondary-button"
+                        onAction="#onExportPdf" disable="true"/>
                 <Button fx:id="backButton" text="back to dashboard" styleClass="secondary-button"
                         onAction="#onBack"/>
             </HBox>
@@ -43,7 +45,7 @@
             <Label fx:id="previewNoteLabel" styleClass="report-note" wrapText="true"
                    text="preview shows the report's content; the exported file is a standalone HTML document"/>
             <Label fx:id="exportHintLabel" styleClass="report-note" wrapText="true"
-                   text="open the exported file in a browser and print to PDF if you need a PDF — the report is written unencrypted to the location you choose"/>
+                   text="both formats are written unencrypted to the location you choose"/>
         </VBox>
     </top>
     <center>

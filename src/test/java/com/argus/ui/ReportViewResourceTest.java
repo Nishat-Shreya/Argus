@@ -112,9 +112,8 @@ class ReportViewResourceTest {
         assertNotNull(exportHint, "no element with fx:id=\"exportHintLabel\" found");
         String exportHintText = exportHint.getAttribute("text");
         assertTrue(exportHintText.contains(
-                "open the exported file in a browser and print to PDF if you need a PDF"));
-        assertTrue(exportHintText.contains(
-                "the report is written unencrypted to the location you choose"));
+                "both formats are written unencrypted to the location you choose"),
+                "P3-18 makes PDF export real, so the old browser-print-to-PDF hint is stale");
     }
 
     @Test

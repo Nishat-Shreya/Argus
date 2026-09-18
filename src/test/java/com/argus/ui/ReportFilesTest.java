@@ -1,5 +1,6 @@
 package com.argus.ui;
 
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
@@ -63,5 +64,27 @@ class ReportFilesTest {
         IOException thrown =
                 assertThrows(IOException.class, () -> ReportFiles.write(file, "<html></html>"));
         assertEquals(true, thrown.getMessage() != null && !thrown.getMessage().isEmpty());
+    }
+
+    @Test
+    void f5WritesAndRoundTripsRawBytes() throws IOException {
+        Path file = tempDir.resolve("report.pdf");
+        byte[] bytes = "%PDF-1.4\n%%EOF".getBytes(StandardCharsets.US_ASCII);
+
+        ReportFiles.write(file, bytes);
+
+        assertArrayEquals(bytes, Files.readAllBytes(file));
+    }
+
+    @Test
+    void f6OverwritingAnExistingLongerBinaryFileTruncates() throws IOException {
+        Path file = tempDir.resolve("report-overwrite.pdf");
+        ReportFiles.write(file, "a much, much longer document than the second write"
+                .getBytes(StandardCharsets.US_ASCII));
+
+        byte[] shortBytes = "short".getBytes(StandardCharsets.US_ASCII);
+        ReportFiles.write(file, shortBytes);
+
+        assertArrayEquals(shortBytes, Files.readAllBytes(file));
     }
 }
