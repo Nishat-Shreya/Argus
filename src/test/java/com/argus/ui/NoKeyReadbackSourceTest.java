@@ -90,6 +90,17 @@ class NoKeyReadbackSourceTest {
                 "NotificationSettingsController must never call urlField.setText(...) -- only clear()");
     }
 
+    /** P3-17: the same discipline, extended to the new email config field. {@code
+     *  EmailSettings.java} is deliberately NOT added to {@code SCANNED_FILES} either -- same
+     *  reason as {@code WebhookSettings.java} above. */
+    @Test
+    void notificationSettingsControllerNeverRepopulatesTheEmailField() {
+        assertFalse(
+                sourceOf("NotificationSettingsController.java").contains("emailField.setText("),
+                "NotificationSettingsController must never call emailField.setText(...) -- only "
+                        + "clear()");
+    }
+
     @Test
     void notificationSettingsControllerDeclaresNoFieldOfTypeString() {
         for (Field field : NotificationSettingsController.class.getDeclaredFields()) {

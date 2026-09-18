@@ -31,6 +31,18 @@
                 <Button fx:id="removeButton" text="remove" styleClass="danger-button"
                         onAction="#onRemove" disable="true"/>
             </HBox>
+            <Label styleClass="card-subtitle" wrapText="true"
+                   text="or configure email alerts over SMTPS (implicit TLS, e.g. port 465) — enter host|port|username|to|password"/>
+            <Label fx:id="emailStatusLabel" styleClass="form-hint"/>
+            <PasswordField fx:id="emailField"
+                            promptText="smtp.example.com|465|user@example.com|to@example.com|password"
+                            styleClass="field"/>
+            <HBox spacing="10">
+                <Button fx:id="emailSaveButton" text="save" styleClass="primary-button"
+                        onAction="#onSaveEmail"/>
+                <Button fx:id="emailRemoveButton" text="remove" styleClass="danger-button"
+                        onAction="#onRemoveEmail" disable="true"/>
+            </HBox>
             <Label fx:id="messageLabel" styleClass="form-hint" visible="false" managed="false"
                    wrapText="true"/>
         </VBox>

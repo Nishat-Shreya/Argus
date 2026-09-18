@@ -32,6 +32,14 @@ public final class NotificationSettingsController {
     @FXML
     private Button removeButton;
     @FXML
+    private Label emailStatusLabel;
+    @FXML
+    private PasswordField emailField;
+    @FXML
+    private Button emailSaveButton;
+    @FXML
+    private Button emailRemoveButton;
+    @FXML
     private Button backButton;
     @FXML
     private Label messageLabel;
@@ -39,11 +47,18 @@ public final class NotificationSettingsController {
     private Vault vault;
     private Runnable onClose;
 
-    /** Single-flight guard; a write is in flight. FX-thread-confined, not volatile. */
+    /** Single-flight guard; a write is in flight. FX-thread-confined, not volatile. Shared by
+     *  both the webhook and email blocks -- they are two fields on one small settings screen,
+     *  never edited concurrently by one operator. */
     private boolean busy;
 
-    /** First press of a two-press removal has happened. FX-thread-confined, not volatile. */
+    /** First press of a two-press removal has happened, for the webhook URL. FX-thread-confined,
+     *  not volatile. */
     private boolean pendingRemove;
+
+    /** First press of a two-press removal has happened, for the email config. FX-thread-confined,
+     *  not volatile. */
+    private boolean pendingRemoveEmail;
 
     /** Injected by App immediately after the FXML loads. */
     public void setVault(Vault injectedVault) {
@@ -62,7 +77,9 @@ public final class NotificationSettingsController {
      */
     public void refresh() {
         pendingRemove = false;
+        pendingRemoveEmail = false;
         urlField.clear();
+        emailField.clear();
         clearMessage();
         updateStatusAndButtons();
     }
@@ -159,9 +176,108 @@ public final class NotificationSettingsController {
         thread.start();
     }
 
+    /** The {@link #onSave} shape, reusing {@link EmailSettings} instead of {@link
+     *  WebhookSettings} -- same {@code argus-vault-write} thread, same busy/message handling
+     *  (P3-17). */
+    @FXML
+    private void onSaveEmail() {
+        if (busy) {
+            return;
+        }
+        EmailSettings.Result result = EmailSettings.check(emailField.getText());
+        if (!result.valid()) {
+            showMessage(result.message(), true);
+            AnimationUtils.shake(card);
+            return;
+        }
+
+        String normalizedConfig = emailField.getText().strip();
+        pendingRemoveEmail = false;
+        busy = true;
+        clearMessage();
+        emailSaveButton.setDisable(true);
+        emailRemoveButton.setDisable(true);
+
+        Task<Void> task = new Task<>() {
+            @Override
+            protected Void call() throws VaultException {
+                vault.put(EmailSettings.VAULT_ENTRY, normalizedConfig);
+                return null;
+            }
+        };
+
+        task.setOnSucceeded(event -> {
+            busy = false;
+            emailField.clear();
+            showMessage("saved", false);
+            updateStatusAndButtons();
+        });
+
+        task.setOnFailed(event -> {
+            busy = false;
+            handleFailure(task.getException());
+            updateStatusAndButtons();
+        });
+
+        Thread thread = new Thread(task, "argus-vault-write");
+        thread.setDaemon(true);
+        thread.start();
+    }
+
+    /** The {@link #onRemove} shape, reusing {@link EmailSettings} instead of {@link
+     *  WebhookSettings} (P3-17). */
+    @FXML
+    private void onRemoveEmail() {
+        if (busy) {
+            return;
+        }
+        if (!vault.keys().contains(EmailSettings.VAULT_ENTRY)) {
+            return;
+        }
+
+        if (!pendingRemoveEmail) {
+            pendingRemoveEmail = true;
+            showMessage(
+                    "press remove again to delete the stored email config -- it cannot be "
+                            + "recovered",
+                    true);
+            return;
+        }
+
+        pendingRemoveEmail = false;
+        busy = true;
+        clearMessage();
+        emailSaveButton.setDisable(true);
+        emailRemoveButton.setDisable(true);
+
+        Task<Boolean> task = new Task<>() {
+            @Override
+            protected Boolean call() throws VaultException {
+                return vault.remove(EmailSettings.VAULT_ENTRY);
+            }
+        };
+
+        task.setOnSucceeded(event -> {
+            busy = false;
+            showMessage("removed", false);
+            updateStatusAndButtons();
+        });
+
+        task.setOnFailed(event -> {
+            busy = false;
+            handleFailure(task.getException());
+            updateStatusAndButtons();
+        });
+
+        Thread thread = new Thread(task, "argus-vault-write");
+        thread.setDaemon(true);
+        thread.start();
+    }
+
     @FXML
     private void onBack() {
         pendingRemove = false;
+        pendingRemoveEmail = false;
         clearMessage();
         if (onClose != null) {
             onClose.run();
@@ -173,6 +289,11 @@ public final class NotificationSettingsController {
         statusLabel.setText(configured ? "configured" : "not configured");
         saveButton.setDisable(busy);
         removeButton.setDisable(busy || !configured);
+
+        boolean emailConfigured = vault.keys().contains(EmailSettings.VAULT_ENTRY);
+        emailStatusLabel.setText(emailConfigured ? "configured" : "not configured");
+        emailSaveButton.setDisable(busy);
+        emailRemoveButton.setDisable(busy || !emailConfigured);
     }
 
     private void handleFailure(Throwable exception) {
