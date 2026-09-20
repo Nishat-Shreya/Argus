@@ -1,43 +1,54 @@
-/* Argus shared theme — animated dark terminal.
+/* Argus shared theme — modern cybersecurity/SOC command-center palette.
    Tokens are JavaFX looked-up colours, not CSS custom properties: JavaFX has no var().
-   Declared on .root so every node in the scene can resolve them by name. */
+   Declared on .root so every node in the scene can resolve them by name -- updating the VALUES
+   here re-themes every existing screen at once, with zero structural change to any of them. */
 
 .root {
-    /* surfaces */
-    -argus-bg-base:        #0d0f0d;
-    -argus-bg-panel:       #111511;
-    -argus-bg-panel-alt:   #0a0d0a;
+    /* surfaces: deep navy / near-black, not pure black -- gives gradients somewhere to read */
+    -argus-bg-base:        #0a0e1c;
+    -argus-bg-panel:       #111830;
+    -argus-bg-panel-alt:   #0d1326;
 
     /* borders */
-    -argus-border:         #1f2b1f;
-    -argus-border-strong:  #2a5a35;
+    -argus-border:         #1f2a4a;
+    -argus-border-strong:  #34467a;
 
-    /* accent */
-    -argus-accent:         #3ddc5f;
-    -argus-accent-hover:   #4de870;
+    /* primary: electric blue (replaces the old terminal green as THE accent) */
+    -argus-accent:         #3b82f6;
+    -argus-accent-hover:   #5b93f7;
+    -argus-primary:        #3b82f6;
+    -argus-primary-glow:   rgba(59,130,246,0.35);
 
-    /* status: danger */
-    -argus-danger-bg:      #1a0e0e;
-    -argus-danger-border:  #3a1414;
-    -argus-danger-text:    #e8726e;
+    /* secondary: violet/purple */
+    -argus-secondary:      #8b5cf6;
+    -argus-secondary-glow: rgba(139,92,246,0.32);
+
+    /* tertiary accent: cyan/teal, used sparingly */
+    -argus-teal:           #22d3ee;
+
+    /* status: danger / critical */
+    -argus-danger-bg:      #1f1220;
+    -argus-danger-border:  #4a1f2a;
+    -argus-danger-text:    #f87171;
 
     /* status: warning */
-    -argus-warning-bg:     #1a1608;
-    -argus-warning-border: #3a2f0e;
-    -argus-warning-text:   #d4a53d;
+    -argus-warning-bg:     #201a10;
+    -argus-warning-border: #4a3a14;
+    -argus-warning-text:   #fbbf24;
 
     /* status: success */
-    -argus-success-bg:     #0e1a10;
-    -argus-success-border: #14361c;
+    -argus-success-bg:     #0e2018;
+    -argus-success-border: #16412c;
+    -argus-success-text:   #34d399;
 
-    /* text */
-    -argus-text-primary:   #c9d6c9;
-    -argus-text-secondary: #8fa88f;
-    -argus-text-muted:     #5a6b5a;
+    /* text: high-contrast near-white on navy, not the old dim terminal green-gray */
+    -argus-text-primary:   #e8ecf7;
+    -argus-text-secondary: #9aa5c9;
+    -argus-text-muted:     #5c6690;
 
-    /* app chrome */
+    /* app chrome: clean modern sans-serif, not a monospace terminal font */
     -fx-background-color: -argus-bg-base;
-    -fx-font-family: "Consolas", "Courier New", "Monospaced";
+    -fx-font-family: "Segoe UI", "Helvetica Neue", "Arial", sans-serif;
     -fx-font-size: 13px;
 }
 
@@ -832,4 +843,318 @@
 
 .scheduled-scans-root {
     -fx-background-color: -argus-bg-base;
+}
+
+/* ============================================================================================
+   DESIGN-SYSTEM FOUNDATION (UI-1): reusable classes for the application shell (sidebar/top bar)
+   and the component families every screen redesign will build on later. Nothing in this block
+   is wired into live navigation yet -- these are the shared primitives, not a screen redesign.
+   ============================================================================================ */
+
+/* -- premium card/button/field refinements (shared base classes, used everywhere already) -- */
+
+.card {
+    -fx-background-radius: 14;
+    -fx-border-radius: 14;
+    -fx-effect: dropshadow(gaussian, -argus-primary-glow, 24, 0.15, 0, 6);
+}
+
+.primary-button {
+    -fx-background-color: linear-gradient(to right, -argus-primary, -argus-secondary);
+    -fx-text-fill: -argus-text-primary;
+    -fx-background-radius: 8;
+    -fx-padding: 9 18;
+    -fx-font-weight: bold;
+    -fx-cursor: hand;
+}
+
+.primary-button:hover {
+    -fx-effect: dropshadow(gaussian, -argus-primary-glow, 16, 0.35, 0, 0);
+}
+
+.secondary-button {
+    -fx-background-radius: 8;
+    -fx-cursor: hand;
+}
+
+.danger-button {
+    -fx-background-radius: 8;
+    -fx-cursor: hand;
+}
+
+.field {
+    -fx-background-radius: 8;
+    -fx-border-radius: 8;
+}
+
+/* -- application shell: sidebar -- */
+
+.app-shell {
+    -fx-background-color: -argus-bg-base;
+}
+
+.sidebar {
+    -fx-background-color: -argus-bg-panel;
+    -fx-border-color: -argus-border;
+    -fx-border-width: 0 1 0 0;
+    -fx-padding: 20 12;
+    -fx-spacing: 4;
+    -fx-pref-width: 224;
+    -fx-min-width: 224;
+}
+
+.sidebar-brand {
+    -fx-padding: 0 8 20 8;
+    -fx-spacing: 10;
+    -fx-alignment: center-left;
+}
+
+.sidebar-brand-name {
+    -fx-text-fill: -argus-text-primary;
+    -fx-font-size: 19px;
+    -fx-font-weight: bold;
+}
+
+.sidebar-brand-tagline {
+    -fx-text-fill: -argus-text-muted;
+    -fx-font-size: 10px;
+}
+
+.sidebar-nav-item {
+    -fx-background-color: transparent;
+    -fx-background-radius: 10;
+    -fx-padding: 10 14;
+    -fx-spacing: 12;
+    -fx-alignment: center-left;
+    -fx-cursor: hand;
+    -fx-max-width: Infinity;
+}
+
+.sidebar-nav-item:hover {
+    -fx-background-color: -argus-bg-panel-alt;
+}
+
+.sidebar-nav-item-active {
+    -fx-background-color: linear-gradient(to right, -argus-primary-glow, transparent);
+    -fx-border-color: transparent transparent transparent -argus-primary;
+    -fx-border-width: 0 0 0 3;
+}
+
+.sidebar-nav-label {
+    -fx-text-fill: -argus-text-secondary;
+    -fx-font-size: 13px;
+}
+
+.sidebar-nav-item-active .sidebar-nav-label {
+    -fx-text-fill: -argus-text-primary;
+    -fx-font-weight: bold;
+}
+
+.sidebar-nav-item:hover .sidebar-nav-label {
+    -fx-text-fill: -argus-text-primary;
+}
+
+/* -- application shell: top bar -- */
+
+.topbar-shell {
+    -fx-background-color: -argus-bg-panel;
+    -fx-border-color: -argus-border;
+    -fx-border-width: 0 0 1 0;
+    -fx-padding: 14 24;
+    -fx-spacing: 16;
+    -fx-alignment: center-left;
+}
+
+.topbar-search-field {
+    -fx-background-color: -argus-bg-panel-alt;
+    -fx-border-color: -argus-border;
+    -fx-border-width: 1;
+    -fx-background-radius: 20;
+    -fx-border-radius: 20;
+    -fx-text-fill: -argus-text-primary;
+    -fx-prompt-text-fill: -argus-text-muted;
+    -fx-padding: 8 16;
+    -fx-pref-width: 320;
+}
+
+.topbar-status-online {
+    -fx-text-fill: -argus-success-text;
+    -fx-font-size: 12px;
+}
+
+.topbar-status-dot {
+    -fx-fill: -argus-success-text;
+}
+
+.topbar-operator-name {
+    -fx-text-fill: -argus-text-primary;
+    -fx-font-weight: bold;
+    -fx-font-size: 13px;
+}
+
+.topbar-operator-role {
+    -fx-text-fill: -argus-text-muted;
+    -fx-font-size: 11px;
+}
+
+/* -- reusable component families later screen redesigns will use -- */
+
+.metric-card {
+    -fx-background-color: -argus-bg-panel;
+    -fx-border-color: -argus-border;
+    -fx-border-width: 1;
+    -fx-background-radius: 14;
+    -fx-border-radius: 14;
+    -fx-padding: 20;
+    -fx-spacing: 6;
+}
+
+.metric-card-value {
+    -fx-text-fill: -argus-text-primary;
+    -fx-font-size: 28px;
+    -fx-font-weight: bold;
+}
+
+.metric-card-label {
+    -fx-text-fill: -argus-text-secondary;
+    -fx-font-size: 12px;
+}
+
+.section-card {
+    -fx-background-color: -argus-bg-panel;
+    -fx-border-color: -argus-border;
+    -fx-border-width: 1;
+    -fx-background-radius: 14;
+    -fx-border-radius: 14;
+    -fx-padding: 18;
+    -fx-spacing: 10;
+}
+
+.section-card-title {
+    -fx-text-fill: -argus-text-primary;
+    -fx-font-size: 15px;
+    -fx-font-weight: bold;
+}
+
+.status-badge {
+    -fx-background-radius: 10;
+    -fx-padding: 3 10;
+    -fx-font-size: 11px;
+    -fx-font-weight: bold;
+}
+
+.status-badge-success {
+    -fx-background-color: -argus-success-bg;
+    -fx-text-fill: -argus-success-text;
+    -fx-border-color: -argus-success-border;
+    -fx-border-width: 1;
+    -fx-border-radius: 10;
+}
+
+.status-badge-warning {
+    -fx-background-color: -argus-warning-bg;
+    -fx-text-fill: -argus-warning-text;
+    -fx-border-color: -argus-warning-border;
+    -fx-border-width: 1;
+    -fx-border-radius: 10;
+}
+
+.status-badge-danger {
+    -fx-background-color: -argus-danger-bg;
+    -fx-text-fill: -argus-danger-text;
+    -fx-border-color: -argus-danger-border;
+    -fx-border-width: 1;
+    -fx-border-radius: 10;
+}
+
+.severity-badge {
+    -fx-background-radius: 10;
+    -fx-padding: 2 9;
+    -fx-font-size: 10px;
+    -fx-font-weight: bold;
+}
+
+.tag-chip {
+    -fx-background-color: -argus-bg-panel-alt;
+    -fx-border-color: -argus-border;
+    -fx-border-width: 1;
+    -fx-background-radius: 12;
+    -fx-border-radius: 12;
+    -fx-padding: 3 12;
+    -fx-text-fill: -argus-teal;
+    -fx-font-size: 11px;
+}
+
+.icon-button {
+    -fx-background-color: transparent;
+    -fx-background-radius: 8;
+    -fx-padding: 6;
+    -fx-cursor: hand;
+}
+
+.icon-button:hover {
+    -fx-background-color: -argus-bg-panel-alt;
+}
+
+.app-separator {
+    -fx-background-color: -argus-border;
+    -fx-pref-height: 1;
+    -fx-max-height: 1;
+}
+
+/* -- icons (Icons.java): stroke-only outline glyphs, colored via the same theme tokens -- */
+
+.nav-icon {
+    -fx-stroke: -argus-text-secondary;
+    -fx-stroke-width: 1.4;
+}
+
+.sidebar-nav-item-active .nav-icon,
+.sidebar-nav-item:hover .nav-icon {
+    -fx-stroke: -argus-text-primary;
+}
+
+.argus-eye .nav-icon {
+    -fx-stroke: -argus-primary;
+}
+
+.eye-pupil {
+    -fx-fill: -argus-primary;
+}
+
+/* -- scrollbars: thin, low-contrast, matches the navy panel surfaces -- */
+
+.scroll-bar {
+    -fx-background-color: transparent;
+}
+
+.scroll-bar .thumb {
+    -fx-background-color: -argus-border-strong;
+    -fx-background-radius: 6;
+}
+
+.scroll-bar .thumb:hover {
+    -fx-background-color: -argus-text-muted;
+}
+
+.scroll-bar .track {
+    -fx-background-color: transparent;
+}
+
+.scroll-bar .increment-button,
+.scroll-bar .decrement-button {
+    -fx-background-color: transparent;
+    -fx-padding: 0;
+}
+
+/* -- tooltips -- */
+
+.tooltip {
+    -fx-background-color: -argus-bg-panel-alt;
+    -fx-text-fill: -argus-text-primary;
+    -fx-border-color: -argus-border-strong;
+    -fx-border-width: 1;
+    -fx-background-radius: 6;
+    -fx-border-radius: 6;
+    -fx-font-size: 12px;
 }
