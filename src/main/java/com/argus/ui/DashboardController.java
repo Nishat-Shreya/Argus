@@ -240,7 +240,6 @@ public final class DashboardController {
         queueDropZone.setOnDragExited(
                 event -> queueDropZone.getStyleClass().remove("drop-zone-active"));
         queueDropZone.setOnDragDropped(this::handleDragDropped);
-        updateQueueControls();
 
         coordinator = new ScanCoordinator(new ScanEventListener() {
             @Override
@@ -274,6 +273,7 @@ public final class DashboardController {
                 Platform.runLater(() -> onScanFinishedOnFxThread(outcome));
             }
         }, new DefaultScanJobFactory(), ScanArchive.atDefaultLocation()::save);
+        updateQueueControls();
 
         history = ScanHistory.atDefaultLocation();
         intelArchive = IntelArchive.atDefaultLocation();

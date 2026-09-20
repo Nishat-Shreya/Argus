@@ -118,6 +118,34 @@ class DashboardQueueWiringTest {
         }
     }
 
+    /**
+     * Regression guard for a real bug found 2026-09-18: {@code initialize()} called {@code
+     * updateQueueControls()} (which dereferences {@code coordinator.isRunning()}) BEFORE {@code
+     * coordinator} was assigned, throwing a {@code NullPointerException} on every real app
+     * launch since this file's very first commit. No test caught it because nothing in this
+     * suite drives a real {@code FXMLLoader} against this controller (deliberately, per this
+     * project's no-TestFX/Monocle policy) -- the first thing that ever actually exercised
+     * {@code initialize()} was an operator's own click. Source-scan is the only reachable guard.
+     */
+    @Test
+    void w8InitializeAssignsCoordinatorBeforeCallingUpdateQueueControls() throws IOException {
+        String source =
+                readSource(Path.of("src/main/java/com/argus/ui/DashboardController.java"));
+        int initializeIndex = source.indexOf("private void initialize()");
+        int coordinatorAssignIndex =
+                source.indexOf("coordinator = new ScanCoordinator(", initializeIndex);
+        int firstUpdateQueueControlsCall =
+                source.indexOf("updateQueueControls();", initializeIndex);
+
+        assertTrue(coordinatorAssignIndex >= 0,
+                "initialize() must assign the coordinator field");
+        assertTrue(firstUpdateQueueControlsCall >= 0,
+                "initialize() must call updateQueueControls() at least once");
+        assertTrue(coordinatorAssignIndex < firstUpdateQueueControlsCall,
+                "coordinator must be assigned before the first updateQueueControls() call in "
+                        + "initialize(), since that method dereferences coordinator.isRunning()");
+    }
+
     @Test
     void w7DashboardControllerUsesCopyOnlyTransferMode() throws IOException {
         String source =
