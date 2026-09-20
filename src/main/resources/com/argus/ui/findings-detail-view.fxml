@@ -20,8 +20,8 @@
             styleClass="findings-detail-root">
     <top>
         <VBox fx:id="root" styleClass="toolbar" spacing="10">
+            <Label text="findings detail" styleClass="card-title"/>
             <HBox spacing="16" alignment="CENTER_LEFT">
-                <Label text="findings detail" styleClass="card-title"/>
                 <VBox spacing="4">
                     <Label text="scan" styleClass="card-subtitle"/>
                     <HBox spacing="8">

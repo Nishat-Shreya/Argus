@@ -17,12 +17,12 @@
             styleClass="timeline-root">
     <top>
         <VBox fx:id="root" styleClass="toolbar" spacing="10">
+            <VBox spacing="4">
+                <Label text="timeline" styleClass="card-title"/>
+                <Label styleClass="card-subtitle" wrapText="true"
+                       text="scrub a target's persisted scan history — each position shows what that scan recorded, never what changed between positions"/>
+            </VBox>
             <HBox spacing="16" alignment="CENTER_LEFT">
-                <VBox spacing="4">
-                    <Label text="timeline" styleClass="card-title"/>
-                    <Label styleClass="card-subtitle" wrapText="true"
-                           text="scrub a target's persisted scan history — each position shows what that scan recorded, never what changed between positions"/>
-                </VBox>
                 <VBox spacing="4">
                     <Label text="target" styleClass="card-subtitle"/>
                     <ComboBox fx:id="targetCombo" prefWidth="220"/>

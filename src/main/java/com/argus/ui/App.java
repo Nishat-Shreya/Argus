@@ -18,8 +18,10 @@ import java.lang.System.Logger.Level;
 import java.util.List;
 import javafx.application.Application;
 import javafx.fxml.FXMLLoader;
+import javafx.geometry.Rectangle2D;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
+import javafx.stage.Screen;
 import javafx.stage.Stage;
 
 /**
@@ -121,7 +123,10 @@ public final class App extends Application {
         LoginController controller = loader.getController();
         controller.setVaultStore(VaultStore.atDefaultLocation());
 
-        Scene scene = new Scene(loginRoot, 1280, 800);
+        Rectangle2D visualBounds = Screen.getPrimary().getVisualBounds();
+        double sceneWidth = Math.min(1280, visualBounds.getWidth() - 40);
+        double sceneHeight = Math.min(800, visualBounds.getHeight() - 60);
+        Scene scene = new Scene(loginRoot, sceneWidth, sceneHeight);
         Theme.applyTo(scene);
 
         controller.setOnUnlocked(unlockedVault -> {
@@ -165,8 +170,8 @@ public final class App extends Application {
         });
 
         stage.setTitle(WINDOW_TITLE);
-        stage.setMinWidth(960);
-        stage.setMinHeight(600);
+        stage.setMinWidth(Math.min(960, sceneWidth));
+        stage.setMinHeight(Math.min(600, sceneHeight));
         stage.setScene(scene);
         stage.show();
     }

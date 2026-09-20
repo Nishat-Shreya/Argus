@@ -17,12 +17,12 @@
             styleClass="graph-root">
     <top>
         <VBox fx:id="root" styleClass="toolbar" spacing="10">
+            <VBox spacing="4">
+                <Label text="network graph" styleClass="card-title"/>
+                <Label styleClass="card-subtitle" wrapText="true"
+                       text="argus does not resolve dns — an edge means &quot;discovered under this scan target&quot;, not &quot;resolves to&quot;"/>
+            </VBox>
             <HBox spacing="16" alignment="CENTER_LEFT">
-                <VBox spacing="4">
-                    <Label text="network graph" styleClass="card-title"/>
-                    <Label styleClass="card-subtitle" wrapText="true"
-                           text="argus does not resolve dns — an edge means &quot;discovered under this scan target&quot;, not &quot;resolves to&quot;"/>
-                </VBox>
                 <VBox spacing="4">
                     <Label text="scan" styleClass="card-subtitle"/>
                     <HBox spacing="8">

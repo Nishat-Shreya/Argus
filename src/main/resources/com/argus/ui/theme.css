@@ -139,6 +139,19 @@
     -fx-alignment: center-left;
 }
 
+/* The toolbar has grown past most windows' width across many backlog items; wrapping it in a
+   horizontal ScrollPane lets every button keep its full label instead of shrinking to fit
+   (found 2026-09-18, the first time anyone actually looked at the running dashboard). */
+.toolbar-scroll {
+    -fx-background-color: transparent;
+    -fx-border-color: -argus-border;
+    -fx-border-width: 0 0 1 0;
+}
+
+.toolbar-scroll > .viewport {
+    -fx-background-color: transparent;
+}
+
 .secondary-button {
     -fx-background-color: -argus-bg-panel-alt;
     -fx-text-fill: -argus-text-primary;

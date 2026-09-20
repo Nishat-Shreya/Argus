@@ -5,6 +5,7 @@
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.control.ListView?>
 <?import javafx.scene.control.ProgressBar?>
+<?import javafx.scene.control.ScrollPane?>
 <?import javafx.scene.control.SplitPane?>
 <?import javafx.scene.control.TableColumn?>
 <?import javafx.scene.control.TableView?>
@@ -19,6 +20,8 @@
             fx:controller="com.argus.ui.DashboardController"
             styleClass="dashboard-root">
     <top>
+        <ScrollPane fitToHeight="true" hbarPolicy="AS_NEEDED" vbarPolicy="NEVER"
+                    styleClass="toolbar-scroll">
         <HBox fx:id="toolbar" styleClass="toolbar" alignment="CENTER_LEFT" spacing="10">
             <Label text="argus" styleClass="card-title"/>
             <TextField fx:id="targetField" promptText="target domain" styleClass="field"/>
@@ -50,6 +53,7 @@
             <Label fx:id="messageLabel" styleClass="form-error" visible="false" managed="false"
                    wrapText="true"/>
         </HBox>
+        </ScrollPane>
     </top>
     <left>
         <VBox fx:id="queueDropZone" styleClass="target-queue-panel drop-zone" prefWidth="240"

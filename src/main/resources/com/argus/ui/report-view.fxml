@@ -17,12 +17,12 @@
             styleClass="report-root">
     <top>
         <VBox fx:id="root" styleClass="toolbar" spacing="10">
+            <VBox spacing="4">
+                <Label text="report export" styleClass="card-title"/>
+                <Label styleClass="card-subtitle" wrapText="true"
+                       text="exports one completed scan's findings as a standalone HTML or PDF document — not a diff"/>
+            </VBox>
             <HBox spacing="16" alignment="CENTER_LEFT">
-                <VBox spacing="4">
-                    <Label text="report export" styleClass="card-title"/>
-                    <Label styleClass="card-subtitle" wrapText="true"
-                           text="exports one completed scan's findings as a standalone HTML or PDF document — not a diff"/>
-                </VBox>
                 <VBox spacing="4">
                     <Label text="scan" styleClass="card-subtitle"/>
                     <HBox spacing="8">

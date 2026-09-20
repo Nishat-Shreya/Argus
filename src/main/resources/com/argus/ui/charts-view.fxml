@@ -19,12 +19,12 @@
             styleClass="charts-root">
     <top>
         <VBox fx:id="root" styleClass="toolbar" spacing="10">
+            <VBox spacing="4">
+                <Label text="charts" styleClass="card-title"/>
+                <Label styleClass="card-subtitle" wrapText="true"
+                       text="argus is discovery-only — an open port is an exposure signal, not a scored vulnerability"/>
+            </VBox>
             <HBox spacing="16" alignment="CENTER_LEFT">
-                <VBox spacing="4">
-                    <Label text="charts" styleClass="card-title"/>
-                    <Label styleClass="card-subtitle" wrapText="true"
-                           text="argus is discovery-only — an open port is an exposure signal, not a scored vulnerability"/>
-                </VBox>
                 <VBox spacing="4">
                     <Label text="scan" styleClass="card-subtitle"/>
                     <HBox spacing="8">
