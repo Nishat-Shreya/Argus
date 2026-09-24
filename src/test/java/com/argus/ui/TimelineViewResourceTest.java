@@ -28,10 +28,10 @@ import org.w3c.dom.NodeList;
 class TimelineViewResourceTest {
 
     private static final String CLASSPATH_LOCATION = "/com/argus/ui/timeline-view.fxml";
-    private static final String DASHBOARD_CLASSPATH_LOCATION = "/com/argus/ui/dashboard-view.fxml";
+    private static final String SIDEBAR_CLASSPATH_LOCATION = "/com/argus/ui/sidebar-nav.fxml";
 
     private static Document document;
-    private static Document dashboardDocument;
+    private static Document sidebarDocument;
 
     @BeforeAll
     static void parseTimelineView() throws Exception {
@@ -43,9 +43,9 @@ class TimelineViewResourceTest {
             document = builder.parse(new ByteArrayInputStream(in.readAllBytes()));
         }
         try (InputStream in = TimelineViewResourceTest.class
-                .getResourceAsStream(DASHBOARD_CLASSPATH_LOCATION)) {
-            assertNotNull(in, "dashboard-view.fxml not packaged at " + DASHBOARD_CLASSPATH_LOCATION);
-            dashboardDocument = builder.parse(new ByteArrayInputStream(in.readAllBytes()));
+                .getResourceAsStream(SIDEBAR_CLASSPATH_LOCATION)) {
+            assertNotNull(in, "sidebar-nav.fxml not packaged at " + SIDEBAR_CLASSPATH_LOCATION);
+            sidebarDocument = builder.parse(new ByteArrayInputStream(in.readAllBytes()));
         }
     }
 
@@ -158,12 +158,18 @@ class TimelineViewResourceTest {
                 "timeline-view.fxml must not contain the word \"severity\" anywhere");
     }
 
+    /**
+     * P1 UI redesign: the dashboard's per-screen toolbar buttons were replaced by the shared
+     * sidebar ({@code sidebar-nav.fxml}), which now owns the single navigation entry point to
+     * every screen, including this one -- {@code DashboardController.setOpenTimelineHandler}
+     * still exists unchanged and forwards to the sidebar's own {@code timelineItem}.
+     */
     @Test
-    void dashboardViewDeclaresATimelineButtonWiredToOnOpenTimeline() {
-        Element button = findElementWithFxId(dashboardDocument.getDocumentElement(), "timelineButton");
-        assertNotNull(button, "no element with fx:id=\"timelineButton\" found in dashboard-view.fxml");
-        assertEquals("Button", button.getTagName());
-        assertEquals("#onOpenTimeline", button.getAttribute("onAction"));
+    void sidebarNavViewDeclaresATimelineItemWiredToOnTimeline() {
+        Element item = findElementWithFxId(sidebarDocument.getDocumentElement(), "timelineItem");
+        assertNotNull(item, "no element with fx:id=\"timelineItem\" found in sidebar-nav.fxml");
+        assertEquals("HBox", item.getTagName());
+        assertEquals("#onTimeline", item.getAttribute("onMouseClicked"));
     }
 
     private String textContentLowercase() {

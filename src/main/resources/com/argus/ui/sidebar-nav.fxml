@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Region?>
+<?import javafx.scene.layout.VBox?>
+
+<VBox xmlns="http://javafx.com/javafx/21"
+      xmlns:fx="http://javafx.com/fxml/1"
+      fx:controller="com.argus.ui.SidebarNavController"
+      styleClass="sidebar">
+    <HBox fx:id="brandBox" styleClass="sidebar-brand"/>
+    <HBox fx:id="dashboardItem" styleClass="sidebar-nav-item" onMouseClicked="#onDashboard">
+        <Label text="Dashboard" styleClass="sidebar-nav-label"/>
+    </HBox>
+    <HBox fx:id="findingsItem" styleClass="sidebar-nav-item" onMouseClicked="#onFindings">
+        <Label text="Findings" styleClass="sidebar-nav-label"/>
+    </HBox>
+    <HBox fx:id="diffItem" styleClass="sidebar-nav-item" onMouseClicked="#onDiff">
+        <Label text="Scan Diff" styleClass="sidebar-nav-label"/>
+    </HBox>
+    <HBox fx:id="chartsItem" styleClass="sidebar-nav-item" onMouseClicked="#onCharts">
+        <Label text="Charts" styleClass="sidebar-nav-label"/>
+    </HBox>
+    <HBox fx:id="graphItem" styleClass="sidebar-nav-item" onMouseClicked="#onGraph">
+        <Label text="Network Graph" styleClass="sidebar-nav-label"/>
+    </HBox>
+    <HBox fx:id="timelineItem" styleClass="sidebar-nav-item" onMouseClicked="#onTimeline">
+        <Label text="Timeline" styleClass="sidebar-nav-label"/>
+    </HBox>
+    <HBox fx:id="scheduledScansItem" styleClass="sidebar-nav-item" onMouseClicked="#onScheduledScans">
+        <Label text="Scheduled Scans" styleClass="sidebar-nav-label"/>
+    </HBox>
+    <HBox fx:id="reportItem" styleClass="sidebar-nav-item" onMouseClicked="#onReport">
+        <Label text="Reports" styleClass="sidebar-nav-label"/>
+    </HBox>
+    <HBox fx:id="notificationsItem" styleClass="sidebar-nav-item" onMouseClicked="#onNotifications">
+        <Label text="Notifications" styleClass="sidebar-nav-label"/>
+    </HBox>
+    <HBox fx:id="apiKeysItem" styleClass="sidebar-nav-item" onMouseClicked="#onApiKeys">
+        <Label text="API Keys" styleClass="sidebar-nav-label"/>
+    </HBox>
+    <Region VBox.vgrow="ALWAYS"/>
+</VBox>

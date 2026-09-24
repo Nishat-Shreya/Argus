@@ -23,7 +23,10 @@
     </top>
     <center>
         <HBox spacing="16">
-            <TableView fx:id="sourcesTable" styleClass="key-table">
+            <TableView fx:id="sourcesTable" styleClass="key-table" HBox.hgrow="ALWAYS">
+                <columnResizePolicy>
+                    <TableView fx:constant="CONSTRAINED_RESIZE_POLICY"/>
+                </columnResizePolicy>
                 <columns>
                     <TableColumn text="source" prefWidth="140"/>
                     <TableColumn text="vault entry" prefWidth="180"/>

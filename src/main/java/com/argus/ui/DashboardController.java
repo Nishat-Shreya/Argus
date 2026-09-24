@@ -1,5 +1,6 @@
 package com.argus.ui;
 
+import com.argus.core.FindingSnapshot;
 import com.argus.core.IntelArchive;
 import com.argus.core.IntelReport;
 import com.argus.core.IntelSubject;
@@ -22,6 +23,9 @@ import java.io.IOException;
 import java.lang.System.Logger.Level;
 import java.nio.file.Path;
 import java.time.Instant;
+import java.time.LocalDate;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -37,6 +41,9 @@ import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.concurrent.Task;
 import javafx.fxml.FXML;
+import javafx.scene.chart.LineChart;
+import javafx.scene.chart.PieChart;
+import javafx.scene.chart.XYChart;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.ListView;
@@ -69,7 +76,13 @@ public final class DashboardController {
     private static final long SCHEDULER_PERIOD_SECONDS = 30;
 
     @FXML
+    private VBox sidebar;
+    @FXML
+    private SidebarNavController sidebarController;
+    @FXML
     private HBox toolbar;
+    @FXML
+    private Label operatorNameLabel;
     @FXML
     private TextField targetField;
     @FXML
@@ -79,27 +92,29 @@ public final class DashboardController {
     @FXML
     private Button cancelButton;
     @FXML
-    private Button keysButton;
-    @FXML
-    private Button diffButton;
-    @FXML
-    private Button chartsButton;
-    @FXML
-    private Button graphButton;
-    @FXML
-    private Button timelineButton;
-    @FXML
-    private Button reportButton;
-    @FXML
-    private Button notificationsButton;
-    @FXML
-    private Button findingsButton;
-    @FXML
-    private Button scheduledScansButton;
-    @FXML
     private Circle liveDot;
     @FXML
     private Label messageLabel;
+    @FXML
+    private Label totalScansValue;
+    @FXML
+    private Label totalFindingsValue;
+    @FXML
+    private Label scheduledScansValue;
+    @FXML
+    private PieChart findingsByTypeChart;
+    @FXML
+    private LineChart<String, Number> scanTrendChart;
+    @FXML
+    private TableView<DashboardMetrics.RecentScanRow> recentScansTable;
+    @FXML
+    private TableColumn<DashboardMetrics.RecentScanRow, String> recentTargetColumn;
+    @FXML
+    private TableColumn<DashboardMetrics.RecentScanRow, String> recentStatusColumn;
+    @FXML
+    private TableColumn<DashboardMetrics.RecentScanRow, String> recentFindingsColumn;
+    @FXML
+    private TableColumn<DashboardMetrics.RecentScanRow, String> recentStartedColumn;
     @FXML
     private TableView<FindingRow> findingsTable;
     @FXML
@@ -227,6 +242,17 @@ public final class DashboardController {
         subjectColumn.setCellValueFactory(cd -> new ReadOnlyStringWrapper(cd.getValue().subject()));
         portColumn.setCellValueFactory(cd -> new ReadOnlyStringWrapper(cd.getValue().port()));
         stateColumn.setCellValueFactory(cd -> new ReadOnlyStringWrapper(cd.getValue().state()));
+
+        recentTargetColumn.setCellValueFactory(
+                cd -> new ReadOnlyStringWrapper(cd.getValue().target()));
+        recentStatusColumn.setCellValueFactory(
+                cd -> new ReadOnlyStringWrapper(cd.getValue().status()));
+        recentFindingsColumn.setCellValueFactory(
+                cd -> new ReadOnlyStringWrapper(String.valueOf(cd.getValue().findingCount())));
+        recentStartedColumn.setCellValueFactory(
+                cd -> new ReadOnlyStringWrapper(cd.getValue().startedAt()));
+
+        sidebarController.setActive("dashboard");
 
         workerList.setItems(workerItems);
         logConsole.setItems(logItems);
@@ -375,9 +401,19 @@ public final class DashboardController {
         updateQueueControls();
     }
 
-    /** Injected by App: opens the key-vault settings panel. */
+    /** Injected by App: the operator's greeting in the top bar (P1 UI redesign) -- a plain
+     *  String, never a {@code Vault}, so this controller still declares no {@code Vault} field
+     *  (the P1-06 decision, {@code NotificationWiringTest.w6}). */
+    public void setOperatorName(String operatorName) {
+        operatorNameLabel.setText("Welcome back, " + operatorName + "!");
+    }
+
+    /** Injected by App: opens the key-vault settings panel. Also reaches the sidebar's matching
+     *  nav item (P1 UI redesign) -- the sidebar replaces the toolbar's old per-screen buttons as
+     *  the single navigation surface, but reuses this exact handler-injection path unchanged. */
     public void setOpenKeySettingsHandler(Runnable handler) {
         this.onOpenKeySettings = handler;
+        sidebarController.setOnApiKeys(handler);
     }
 
     @FXML
@@ -390,6 +426,7 @@ public final class DashboardController {
     /** Injected by App: opens the scan diff panel. */
     public void setOpenDiffHandler(Runnable handler) {
         this.onOpenDiff = handler;
+        sidebarController.setOnDiff(handler);
     }
 
     @FXML
@@ -402,6 +439,7 @@ public final class DashboardController {
     /** Injected by App: opens the charts panel. */
     public void setOpenChartsHandler(Runnable handler) {
         this.onOpenCharts = handler;
+        sidebarController.setOnCharts(handler);
     }
 
     @FXML
@@ -414,6 +452,7 @@ public final class DashboardController {
     /** Injected by App: opens the network graph panel. */
     public void setOpenGraphHandler(Runnable handler) {
         this.onOpenGraph = handler;
+        sidebarController.setOnGraph(handler);
     }
 
     @FXML
@@ -426,6 +465,7 @@ public final class DashboardController {
     /** Injected by App: opens the timeline panel. */
     public void setOpenTimelineHandler(Runnable handler) {
         this.onOpenTimeline = handler;
+        sidebarController.setOnTimeline(handler);
     }
 
     @FXML
@@ -438,6 +478,7 @@ public final class DashboardController {
     /** Injected by App: opens the report export panel. */
     public void setOpenReportHandler(Runnable handler) {
         this.onOpenReport = handler;
+        sidebarController.setOnReport(handler);
     }
 
     @FXML
@@ -450,6 +491,7 @@ public final class DashboardController {
     /** Injected by App: opens the notifications settings panel. */
     public void setOpenNotificationSettingsHandler(Runnable handler) {
         this.onOpenNotificationSettings = handler;
+        sidebarController.setOnNotifications(handler);
     }
 
     @FXML
@@ -462,6 +504,7 @@ public final class DashboardController {
     /** Injected by App: opens the findings detail panel. */
     public void setOpenFindingsDetailHandler(Runnable handler) {
         this.onOpenFindingsDetail = handler;
+        sidebarController.setOnFindings(handler);
     }
 
     @FXML
@@ -474,6 +517,7 @@ public final class DashboardController {
     /** Injected by App: opens the scheduled-scans panel. */
     public void setOpenScheduledScansHandler(Runnable handler) {
         this.onOpenScheduledScans = handler;
+        sidebarController.setOnScheduledScans(handler);
     }
 
     @FXML
@@ -483,9 +527,13 @@ public final class DashboardController {
         }
     }
 
-    /** Injected by App immediately after this controller loads. */
+    /** Injected by App immediately after this controller loads -- also the trigger for the
+     *  dashboard overview's first {@link DashboardMetrics} load (P1 UI redesign): it is the
+     *  last of the two real data sources {@link DashboardMetrics#of} needs, {@code history}
+     *  already having been constructed in {@link #initialize()}. */
     public void setScheduledScans(ScheduledScanArchive archive) {
         this.scheduledScans = archive;
+        loadDashboardMetrics();
     }
 
     /** Injected by App immediately after unlock (P3-15). Honors {@code -Dargus.intel=false} as
@@ -582,6 +630,95 @@ public final class DashboardController {
         maybeNotify(outcome);
         maybeEnrichIntel(outcome);
         advanceQueue(outcome);
+        loadDashboardMetrics();
+    }
+
+    /** Quick Actions (P1 UI redesign): "New Scan" is the real target field + scan button, just
+     *  focused -- not a second scan-launching path. */
+    @FXML
+    private void onQuickNewScan() {
+        targetField.requestFocus();
+    }
+
+    @FXML
+    private void onQuickViewFindings() {
+        if (onOpenFindingsDetail != null) {
+            onOpenFindingsDetail.run();
+        }
+    }
+
+    /** Tags are managed from the findings detail panel (no separate tags screen exists), so
+     *  this reuses the exact same handler as "View Findings" (P1 UI redesign: never invent a
+     *  navigation target that isn't real). */
+    @FXML
+    private void onQuickManageTags() {
+        onQuickViewFindings();
+    }
+
+    @FXML
+    private void onQuickCreateSchedule() {
+        if (onOpenScheduledScans != null) {
+            onOpenScheduledScans.run();
+        }
+    }
+
+    /**
+     * Recomputes the dashboard overview (P1 UI redesign) from real, already-persisted data --
+     * never fabricated. Runs entirely on a background daemon thread (invariant 3): {@code
+     * history.listFindings} is called once per scan, which is fine at this app's real scale (a
+     * single operator's local scan history), then handed to the pure, toolkit-free {@link
+     * DashboardMetrics#of}. Triggered once after {@link #setScheduledScans} (the last of its two
+     * real data sources to become available) and again after every scan finishes, so the
+     * overview never goes stale while the dashboard is open.
+     */
+    private void loadDashboardMetrics() {
+        ScanHistory historySnapshot = history;
+        ScheduledScanArchive scheduledSnapshot = scheduledScans;
+        Task<DashboardMetrics> task = new Task<>() {
+            @Override
+            protected DashboardMetrics call() throws ScanArchiveException {
+                List<ScanSummary> scans = historySnapshot.listScans();
+                Map<Long, List<FindingSnapshot>> findingsByScan = new LinkedHashMap<>();
+                for (ScanSummary scan : scans) {
+                    findingsByScan.put(scan.id(), historySnapshot.listFindings(scan.id()));
+                }
+                int scheduledCount =
+                        scheduledSnapshot == null ? 0 : scheduledSnapshot.list().size();
+                return DashboardMetrics.of(scans, findingsByScan, scheduledCount,
+                        LocalDate.now(), ZoneId.systemDefault());
+            }
+        };
+        task.setOnSucceeded(event -> applyMetrics(task.getValue()));
+        task.setOnFailed(event -> appendLog(
+                "dashboard overview load skipped · " + task.getException().getMessage()));
+
+        Thread thread = new Thread(task, "argus-dashboard-metrics");
+        thread.setDaemon(true);
+        thread.start();
+    }
+
+    private void applyMetrics(DashboardMetrics metrics) {
+        totalScansValue.setText(String.valueOf(metrics.totalScans()));
+        totalFindingsValue.setText(String.valueOf(metrics.totalFindings()));
+        scheduledScansValue.setText(String.valueOf(metrics.scheduledScansCount()));
+
+        findingsByTypeChart.getData().clear();
+        for (Map.Entry<String, Integer> entry : metrics.findingsByType().entrySet()) {
+            findingsByTypeChart.getData().add(
+                    new PieChart.Data(entry.getKey(), entry.getValue()));
+        }
+
+        XYChart.Series<String, Number> series = new XYChart.Series<>();
+        series.setName("scans");
+        DateTimeFormatter dayLabel = DateTimeFormatter.ofPattern("MM-dd");
+        for (DashboardMetrics.TrendPoint point : metrics.trend()) {
+            series.getData().add(
+                    new XYChart.Data<>(dayLabel.format(point.date()), point.scanCount()));
+        }
+        scanTrendChart.getData().clear();
+        scanTrendChart.getData().add(series);
+
+        recentScansTable.getItems().setAll(metrics.recentScans());
     }
 
     /**

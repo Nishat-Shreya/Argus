@@ -22,7 +22,10 @@
     </top>
     <center>
         <HBox spacing="16">
-            <TableView fx:id="scheduleTable" styleClass="key-table">
+            <TableView fx:id="scheduleTable" styleClass="key-table" HBox.hgrow="ALWAYS">
+                <columnResizePolicy>
+                    <TableView fx:constant="CONSTRAINED_RESIZE_POLICY"/>
+                </columnResizePolicy>
                 <columns>
                     <TableColumn text="target" prefWidth="200"/>
                     <TableColumn text="interval" prefWidth="120"/>

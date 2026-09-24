@@ -136,6 +136,7 @@ public final class App extends Application {
                         new FXMLLoader(getClass().getResource("dashboard-view.fxml"));
                 this.dashboardRoot = dashboardLoader.load();
                 this.dashboardController = dashboardLoader.getController();
+                dashboardController.setOperatorName(unlockedVault.operator().value());
                 dashboardController.setOpenKeySettingsHandler(() -> showKeyVault(scene));
                 dashboardController.setOpenDiffHandler(() -> showScanDiff(scene));
                 dashboardController.setOpenChartsHandler(() -> showCharts(scene));
