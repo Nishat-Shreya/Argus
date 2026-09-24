@@ -11,7 +11,11 @@ import javafx.animation.Timeline;
 import javafx.animation.TranslateTransition;
 import javafx.application.Platform;
 import javafx.scene.Node;
+import javafx.scene.control.TextInputControl;
+import javafx.scene.effect.BlurType;
+import javafx.scene.effect.DropShadow;
 import javafx.scene.layout.Region;
+import javafx.scene.paint.Color;
 import javafx.util.Duration;
 
 /**
@@ -25,11 +29,19 @@ import javafx.util.Duration;
  * <p>Implemented in P3-06: {@link #expandField(Region, double)}, the click-to-expand annotation
  * field (plan §4.3).
  *
+ * <p>Implemented in the login screen polish batch: {@link #glowPulse(Node)}, a slow breathing
+ * {@code DropShadow} radius (first actually used by the login screen's eye mark, not P2-07's
+ * KEV containers as originally slated -- reusable for either) and
+ * {@link #bindFocusGlow(TextInputControl)}, a smooth border-glow ramp on focus gained/lost. The
+ * {@link #pulseDot(Node)} opacity-pulse technique also gained a
+ * {@link #pulseDot(Node, Duration, double)} overload so the login screen's ambient background
+ * glow can reuse it at a slower period and shallower minimum instead of duplicating the
+ * mechanism.
+ *
  * <p>Not yet implemented (build-prompt "Standard motion types") — add each one in the
  * backlog item that first needs it, never as an empty placeholder:
  * <pre>
  *   scaleIn          modals/popups                 — first needed by P2-09
- *   glowPulse        KEV / attention containers    — first needed by P2-07 UI
  *   rippleOnClick    primary buttons               — first needed by P1-06
  * </pre>
  */
@@ -49,6 +61,14 @@ public final class AnimationUtils {
     private static final double PULSE_MIN_OPACITY = 0.3;
 
     private static final Duration EXPAND_DURATION = Duration.millis(180);
+
+    private static final Duration GLOW_PULSE_PERIOD = Duration.millis(2400);
+    private static final Color GLOW_COLOR = Color.web("#3b82f6", 0.6);
+    private static final double GLOW_MIN_RADIUS = 6;
+    private static final double GLOW_MAX_RADIUS = 16;
+
+    private static final Duration FOCUS_GLOW_DURATION = Duration.millis(250);
+    private static final double FOCUS_GLOW_RADIUS = 10;
 
     /**
      * Visibility-only shared flag. Every access is an unconditional whole-word read or
@@ -152,15 +172,27 @@ public final class AnimationUtils {
      * leaves the node in its final visible state" rule {@link #fadeInUp(Node)} follows.
      */
     public static FadeTransition pulseDot(Node node) {
+        return pulseDot(node, PULSE_DURATION, PULSE_MIN_OPACITY);
+    }
+
+    /**
+     * The same opacity-pulse technique as {@link #pulseDot(Node)}, at a caller-chosen period and
+     * floor -- added for the login screen's ambient background glow, which needs a slow, shallow
+     * breathe rather than {@link #pulseDot(Node)}'s fast "live scan" blink. Same ownership and
+     * shutdown contract: the caller holds the returned transition and stops it when the node is
+     * no longer shown.
+     */
+    public static FadeTransition pulseDot(Node node, Duration period, double minOpacity) {
         Objects.requireNonNull(node, "node");
+        Objects.requireNonNull(period, "period");
         if (!Platform.isFxApplicationThread()) {
             throw new IllegalStateException(
                     "pulseDot must be called on the JavaFX Application Thread");
         }
 
-        FadeTransition pulse = new FadeTransition(PULSE_DURATION, node);
+        FadeTransition pulse = new FadeTransition(period, node);
         pulse.setFromValue(1.0);
-        pulse.setToValue(PULSE_MIN_OPACITY);
+        pulse.setToValue(minOpacity);
         pulse.setCycleCount(Animation.INDEFINITE);
         pulse.setAutoReverse(true);
         pulse.setInterpolator(Interpolator.EASE_BOTH);
@@ -172,6 +204,72 @@ public final class AnimationUtils {
 
         pulse.play();
         return pulse;
+    }
+
+    /**
+     * A slow, subtle breathing glow: a {@link DropShadow}'s radius animates between
+     * {@link #GLOW_MIN_RADIUS} and {@link #GLOW_MAX_RADIUS} every {@link #GLOW_PULSE_PERIOD}
+     * (2.4&nbsp;s), indefinitely, {@code autoReverse = true} -- the login screen's eye mark. Sets
+     * the node's {@code effect} to a new {@code DropShadow} (replacing whatever effect it had),
+     * matching {@link #pulseDot(Node)}'s pattern of owning the property it animates. The caller
+     * holds the returned {@link Timeline} and stops it if the node is ever removed from the
+     * scene for good.
+     */
+    public static Timeline glowPulse(Node node) {
+        Objects.requireNonNull(node, "node");
+        if (!Platform.isFxApplicationThread()) {
+            throw new IllegalStateException(
+                    "glowPulse must be called on the JavaFX Application Thread");
+        }
+
+        DropShadow glow = new DropShadow(BlurType.GAUSSIAN, GLOW_COLOR, GLOW_MIN_RADIUS, 0.15, 0, 0);
+        node.setEffect(glow);
+
+        Timeline pulse = new Timeline(
+                new KeyFrame(Duration.ZERO,
+                        new KeyValue(glow.radiusProperty(), GLOW_MIN_RADIUS, Interpolator.EASE_BOTH)),
+                new KeyFrame(GLOW_PULSE_PERIOD,
+                        new KeyValue(glow.radiusProperty(), GLOW_MAX_RADIUS, Interpolator.EASE_BOTH)));
+        pulse.setCycleCount(Animation.INDEFINITE);
+        pulse.setAutoReverse(true);
+
+        if (isReducedMotion()) {
+            return pulse;
+        }
+
+        pulse.play();
+        return pulse;
+    }
+
+    /**
+     * Smooth focus feedback for a text input (plan: the login screen's "~200-300ms blue
+     * border/glow on focus"): a {@link DropShadow} whose radius ramps 0&rarr;{@link
+     * #FOCUS_GLOW_RADIUS} over {@link #FOCUS_GLOW_DURATION} (250&nbsp;ms) when the field gains
+     * focus, and back on loss -- CSS pseudo-classes swap instantly in JavaFX (no transitions), so
+     * this is the one part of the field's focus feedback that needs a real animation. Attaches a
+     * listener for the field's lifetime; does not return a handle because, unlike
+     * {@link #pulseDot(Node)}/{@link #glowPulse(Node)}, there is nothing indefinitely running to
+     * stop -- each ramp finishes and sits idle until focus changes again.
+     */
+    public static void bindFocusGlow(TextInputControl field) {
+        Objects.requireNonNull(field, "field");
+        if (!Platform.isFxApplicationThread()) {
+            throw new IllegalStateException(
+                    "bindFocusGlow must be called on the JavaFX Application Thread");
+        }
+
+        DropShadow glow = new DropShadow(BlurType.GAUSSIAN, GLOW_COLOR, 0, 0.25, 0, 0);
+        field.setEffect(glow);
+
+        if (isReducedMotion()) {
+            return;
+        }
+
+        field.focusedProperty().addListener((obs, wasFocused, isFocused) -> {
+            Timeline ramp = new Timeline(new KeyFrame(FOCUS_GLOW_DURATION, new KeyValue(
+                    glow.radiusProperty(), isFocused ? FOCUS_GLOW_RADIUS : 0, Interpolator.EASE_OUT)));
+            ramp.play();
+        });
     }
 
     /**

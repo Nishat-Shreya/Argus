@@ -30,6 +30,7 @@ import javafx.scene.control.DatePicker;
 import javafx.scene.control.Label;
 import javafx.scene.control.ListCell;
 import javafx.scene.control.ListView;
+import javafx.scene.control.SplitPane;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.control.TextArea;
@@ -53,6 +54,12 @@ public final class FindingsDetailController {
     private static final double COLLAPSED_HEIGHT = 34;
     private static final double EXPANDED_HEIGHT = 132;
 
+    /** {@link #detailSplit}'s divider position while a finding is selected -- the layout-cleanup
+     *  batch's fix for the empty panel {@code SplitPane} always reserved for {@code detailPane},
+     *  even while its content was invisible/unmanaged. */
+    private static final double DETAIL_SPLIT_OPEN = 0.45;
+    private static final double DETAIL_SPLIT_COLLAPSED = 1.0;
+
     @FXML
     private VBox root;
     @FXML
@@ -73,6 +80,8 @@ public final class FindingsDetailController {
     private ComboBox<String> tagFilterCombo;
     @FXML
     private TableView<NoteRow> findingsTable;
+    @FXML
+    private SplitPane detailSplit;
     @FXML
     private VBox detailPane;
     @FXML
@@ -765,6 +774,7 @@ public final class FindingsDetailController {
         selectedFindingId = row.findingId();
         detailPane.setVisible(true);
         detailPane.setManaged(true);
+        detailSplit.setDividerPositions(DETAIL_SPLIT_OPEN);
         AnimationUtils.fadeInUp(detailPane);
 
         detailLinesBox.getChildren().clear();
@@ -799,6 +809,7 @@ public final class FindingsDetailController {
         selectedFindingId = -1L;
         detailPane.setVisible(false);
         detailPane.setManaged(false);
+        detailSplit.setDividerPositions(DETAIL_SPLIT_COLLAPSED);
         detailLinesBox.getChildren().clear();
         tagList.setItems(FXCollections.observableArrayList());
         tagCountLabel.setText("");

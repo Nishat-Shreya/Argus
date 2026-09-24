@@ -57,6 +57,9 @@
             <Label fx:id="timestampLabel" styleClass="status-line"/>
             <Label fx:id="summaryLabel" styleClass="status-line"/>
             <TableView fx:id="findingsTable" styleClass="report-table" VBox.vgrow="ALWAYS">
+                <columnResizePolicy>
+                    <TableView fx:constant="CONSTRAINED_RESIZE_POLICY"/>
+                </columnResizePolicy>
                 <columns>
                     <TableColumn text="type" prefWidth="90"/>
                     <TableColumn text="subject" prefWidth="220"/>

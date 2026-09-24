@@ -36,6 +36,10 @@ final class Icons {
             case "scheduled-scans" -> scheduledScans();
             case "reports" -> reports();
             case "settings" -> settings();
+            case "diff" -> diff();
+            case "charts" -> charts();
+            case "graph" -> graph();
+            case "notifications" -> notifications();
             default -> placeholder();
         };
     }
@@ -134,8 +138,63 @@ final class Icons {
         return framed(new Group(body, hub));
     }
 
+    private static Node diff() {
+        Line left = strokeLine(2, 5, 8, 5);
+        Line leftHead = strokeLine(5, 2, 2, 5);
+        Line leftHead2 = strokeLine(5, 8, 2, 5);
+        Line right = strokeLine(8, 11, 14, 11);
+        Line rightHead = strokeLine(11, 8, 14, 11);
+        Line rightHead2 = strokeLine(11, 14, 14, 11);
+        return framed(new Group(left, leftHead, leftHead2, right, rightHead, rightHead2));
+    }
+
+    private static Node charts() {
+        Line baseline = strokeLine(1.5, 14.5, 14.5, 14.5);
+        Rectangle bar1 = outline(new Rectangle(3, 9, 2.5, 5.5));
+        Rectangle bar2 = outline(new Rectangle(7, 5, 2.5, 9.5));
+        Rectangle bar3 = outline(new Rectangle(11, 7, 2.5, 7.5));
+        return framed(new Group(baseline, bar1, bar2, bar3));
+    }
+
+    private static Node graph() {
+        Circle center = outline(new Circle(8, 8, 2));
+        Circle topLeft = outline(new Circle(2.5, 3, 1.6));
+        Circle topRight = outline(new Circle(13.5, 3, 1.6));
+        Circle bottom = outline(new Circle(8, 14, 1.6));
+        Line l1 = strokeLine(6.3, 6.7, 3.5, 4);
+        Line l2 = strokeLine(9.7, 6.7, 12.5, 4);
+        Line l3 = strokeLine(8, 10, 8, 12.4);
+        return framed(new Group(l1, l2, l3, center, topLeft, topRight, bottom));
+    }
+
+    private static Node notifications() {
+        Polygon bell = outline(new Polygon(
+                8, 1.5,
+                12.5, 5, 12.5, 9.5, 14.5, 12.5,
+                1.5, 12.5, 3.5, 9.5, 3.5, 5));
+        Line clapper = strokeLine(6.5, 14, 9.5, 14);
+        return framed(new Group(bell, clapper));
+    }
+
     private static Node placeholder() {
         return framed(new Group(outline(new Circle(8, 8, 3))));
+    }
+
+    /** The login password-visibility toggle glyph: a plain open-eye outline when {@code masked}
+     *  (the password is hidden -- clicking reveals it), with a diagonal slash added when not
+     *  {@code masked} (the password is shown -- clicking hides it again). Distinct from
+     *  {@link #eye(double)} (the brand mark, which has an iris highlight) -- this is a plain
+     *  16x16 nav-style icon. */
+    static Node eyeToggle(boolean masked) {
+        Ellipse outer = outline(new Ellipse(8, 5.5));
+        outer.setCenterX(8);
+        outer.setCenterY(8);
+        Circle pupil = outline(new Circle(8, 8, 1.8));
+        Group group = new Group(outer, pupil);
+        if (!masked) {
+            group.getChildren().add(strokeLine(2, 13, 14, 3));
+        }
+        return framed(group);
     }
 
     private static Node framed(Group group) {

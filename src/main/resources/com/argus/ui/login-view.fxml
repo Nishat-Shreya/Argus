@@ -4,21 +4,103 @@
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.control.PasswordField?>
 <?import javafx.scene.control.TextField?>
+<?import javafx.scene.image.Image?>
+<?import javafx.scene.image.ImageView?>
+<?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Region?>
 <?import javafx.scene.layout.StackPane?>
 <?import javafx.scene.layout.VBox?>
+<?import javafx.scene.shape.Circle?>
 
 <StackPane xmlns="http://javafx.com/javafx/21"
            xmlns:fx="http://javafx.com/fxml/1"
            fx:controller="com.argus.ui.LoginController"
            styleClass="login-root">
-    <VBox fx:id="card" styleClass="card" alignment="CENTER" spacing="12">
-        <Label text="argus" styleClass="card-title"/>
-        <Label text="operator login" styleClass="card-subtitle"/>
-        <TextField fx:id="operatorIdField" promptText="operator id" styleClass="field"/>
-        <PasswordField fx:id="masterPasswordField" promptText="master password" styleClass="field"/>
-        <Button fx:id="unlockButton" text="unlock vault" styleClass="primary-button"
-                onAction="#onUnlock" defaultButton="true"/>
-        <Label fx:id="messageLabel" styleClass="form-error" visible="false" managed="false"
-               wrapText="true"/>
-    </VBox>
+    <Circle fx:id="ambientGlow" radius="280" translateX="112" translateY="23"
+            styleClass="login-ambient-glow"/>
+    <BorderPane>
+        <top>
+            <HBox styleClass="login-topbar" alignment="CENTER_LEFT" spacing="10">
+                <ImageView fitWidth="22" fitHeight="22" preserveRatio="true" smooth="true">
+                    <image>
+                        <Image url="@argus-icon.png"/>
+                    </image>
+                </ImageView>
+                <Label text="ARGUS" styleClass="login-topbar-title"/>
+                <Region HBox.hgrow="ALWAYS"/>
+                <Circle fx:id="topbarStatusDot" radius="3" styleClass="topbar-status-dot"/>
+                <Label text="SYSTEM READY" styleClass="topbar-status-online"/>
+                <Label text="SECURE MODE" styleClass="topbar-operator-role"/>
+            </HBox>
+        </top>
+        <left>
+            <VBox styleClass="sidebar login-sidebar">
+                <HBox styleClass="sidebar-brand" alignment="CENTER_LEFT">
+                    <VBox spacing="1">
+                        <Label text="ARGUS" styleClass="sidebar-brand-name"/>
+                        <Label text="SECURITY CONSOLE" styleClass="sidebar-brand-tagline"/>
+                    </VBox>
+                </HBox>
+                <Label text="SYSTEM" styleClass="login-sidebar-section"/>
+                <HBox styleClass="login-locked-item">
+                    <Label text="›  Dashboard" styleClass="login-locked-label"/>
+                </HBox>
+                <HBox styleClass="login-locked-item">
+                    <Label text="›  Operations" styleClass="login-locked-label"/>
+                </HBox>
+                <HBox styleClass="login-locked-item">
+                    <Label text="›  Vault" styleClass="login-locked-label"/>
+                </HBox>
+                <Region styleClass="app-separator"/>
+                <Label text="SECURITY" styleClass="login-sidebar-section"/>
+                <HBox styleClass="login-locked-item login-locked-item-active">
+                    <Label text="›  Access" styleClass="login-locked-label"/>
+                </HBox>
+                <HBox styleClass="login-locked-item">
+                    <Label text="›  Audit Log" styleClass="login-locked-label"/>
+                </HBox>
+                <HBox styleClass="login-locked-item">
+                    <Label text="›  Settings" styleClass="login-locked-label"/>
+                </HBox>
+                <Region VBox.vgrow="ALWAYS"/>
+            </VBox>
+        </left>
+        <center>
+            <VBox styleClass="login-main" alignment="CENTER" maxWidth="Infinity"
+                  maxHeight="Infinity" BorderPane.alignment="CENTER">
+                <VBox fx:id="card" styleClass="card" alignment="CENTER" spacing="9">
+                    <Region styleClass="login-topbar-accent"/>
+                    <Label text="ARGUS" styleClass="login-brand-title"/>
+                    <StackPane fx:id="brandIcon"/>
+                    <Label text="SECURE ACCESS" styleClass="card-title"/>
+                    <Label text="Operator authentication required" styleClass="card-subtitle"/>
+                    <VBox spacing="4">
+                        <Label text="OPERATOR ID" styleClass="login-field-label"/>
+                        <TextField fx:id="operatorIdField" styleClass="field"/>
+                    </VBox>
+                    <VBox spacing="4">
+                        <Label text="MASTER PASSWORD" styleClass="login-field-label"/>
+                        <HBox alignment="CENTER_LEFT" spacing="6">
+                            <StackPane HBox.hgrow="ALWAYS">
+                                <PasswordField fx:id="masterPasswordField" styleClass="field"/>
+                                <TextField fx:id="masterPasswordVisibleField" styleClass="field"
+                                           visible="false" managed="false"/>
+                            </StackPane>
+                            <Button fx:id="passwordVisibilityToggle" styleClass="icon-button"
+                                    onAction="#onTogglePasswordVisibility"/>
+                        </HBox>
+                    </VBox>
+                    <Button fx:id="unlockButton" text="unlock vault"
+                            styleClass="primary-button login-unlock-button" onAction="#onUnlock"
+                            defaultButton="true"/>
+                    <Label fx:id="messageLabel" styleClass="form-error" visible="false"
+                           managed="false" wrapText="true"/>
+                    <HBox styleClass="login-status-row" alignment="CENTER">
+                        <Label text="🔒 SECURE" styleClass="login-status-item"/>
+                    </HBox>
+                </VBox>
+            </VBox>
+        </center>
+    </BorderPane>
 </StackPane>

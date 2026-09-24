@@ -76,9 +76,9 @@
     -fx-border-width: 1;
     -fx-background-radius: 6;
     -fx-border-radius: 6;
-    -fx-padding: 32;
-    -fx-max-width: 420;
-    -fx-spacing: 12;
+    -fx-padding: 26 30;
+    -fx-max-width: 360;
+    -fx-spacing: 9;
 }
 
 .card-title {
@@ -134,6 +134,141 @@
     -fx-font-size: 12px;
 }
 
+/* Login screen polish batch: a compact "desktop console" treatment layered onto the login
+   screen only -- .card/.card-title/.card-subtitle/.field/.primary-button above stay exactly as
+   they were (several other screens' header labels reuse .card-title/.card-subtitle), so every
+   new rule below is a login-exclusive class instead of a change to a shared one. */
+
+.login-ambient-glow {
+    -fx-fill: radial-gradient(radius 100%, -argus-primary-glow, transparent 70%);
+}
+
+.login-topbar-accent {
+    -fx-background-color: linear-gradient(to right, -argus-primary, -argus-secondary);
+    -fx-pref-height: 2;
+    -fx-max-height: 2;
+    -fx-background-radius: 1;
+}
+
+.login-tagline {
+    -fx-text-fill: -argus-text-secondary;
+    -fx-font-size: 10px;
+    -fx-font-weight: bold;
+}
+
+.login-unlock-button:hover {
+    -fx-scale-x: 1.02;
+    -fx-scale-y: 1.02;
+}
+
+.login-unlock-button:pressed {
+    -fx-scale-x: 0.98;
+    -fx-scale-y: 0.98;
+}
+
+.login-status-row {
+    -fx-border-color: -argus-border;
+    -fx-border-width: 1 0 0 0;
+    -fx-padding: 12 0 2 0;
+    -fx-spacing: 14;
+    -fx-alignment: center;
+}
+
+.login-status-item {
+    -fx-text-fill: -argus-text-secondary;
+    -fx-font-size: 12px;
+    -fx-font-weight: bold;
+}
+
+/* Login screen structural redesign: the desktop-console shell (top bar + locked sidebar +
+   compact auth panel) wrapped around the login-exclusive rules above -- .sidebar/.sidebar-brand*
+   /.app-separator/.topbar-status*/.icon-button below are the SAME shared classes the dashboard's
+   app shell already uses (P1 UI redesign), reused here rather than duplicated. */
+
+.login-topbar {
+    -fx-background-color: -argus-bg-panel;
+    -fx-border-color: -argus-border;
+    -fx-border-width: 0 0 1 0;
+    -fx-padding: 12 20;
+}
+
+.login-topbar-title {
+    -fx-text-fill: -argus-text-primary;
+    -fx-font-size: 14px;
+    -fx-font-weight: bold;
+}
+
+.login-main {
+    -fx-padding: 20;
+}
+
+/* Login sidebar readability: the brand block reuses the shared .sidebar-brand-* classes, so the
+   brighter values are scoped under .login-sidebar and never touch the dashboard's sidebar. */
+.login-sidebar .sidebar-brand-name {
+    -fx-text-fill: -argus-text-primary;
+    -fx-font-size: 20px;
+}
+
+.login-sidebar .sidebar-brand-tagline {
+    -fx-text-fill: derive(-argus-text-secondary, 25%);
+    -fx-font-size: 10px;
+    -fx-font-weight: bold;
+}
+
+.login-sidebar-section {
+    -fx-text-fill: -argus-teal;
+    -fx-font-size: 10px;
+    -fx-font-weight: bold;
+    -fx-padding: 16 14 6 14;
+}
+
+/* Nav items are inert before unlock, so hover is a background/text change only (default
+   cursor). Normal / hover / active mirror the dashboard sidebar's look. */
+.login-locked-item {
+    -fx-padding: 7 14;
+    -fx-cursor: default;
+    -fx-background-radius: 10;
+    -fx-border-color: transparent;
+    -fx-border-width: 0 0 0 3;
+}
+
+.login-locked-label {
+    -fx-text-fill: derive(-argus-text-secondary, 35%);
+    -fx-font-size: 13px;
+}
+
+.login-locked-item:hover {
+    -fx-background-color: -argus-bg-panel-alt;
+}
+
+.login-locked-item:hover .login-locked-label {
+    -fx-text-fill: -argus-text-primary;
+}
+
+.login-locked-item-active,
+.login-locked-item-active:hover {
+    -fx-background-color: linear-gradient(to right, -argus-primary-glow, transparent);
+    -fx-border-color: transparent transparent transparent -argus-primary;
+}
+
+.login-locked-item-active .login-locked-label,
+.login-locked-item-active:hover .login-locked-label {
+    -fx-text-fill: -argus-text-primary;
+    -fx-font-weight: bold;
+}
+
+.login-brand-title {
+    -fx-text-fill: -argus-text-primary;
+    -fx-font-size: 26px;
+    -fx-font-weight: bold;
+}
+
+.login-field-label {
+    -fx-text-fill: -argus-text-primary;
+    -fx-font-size: 10px;
+    -fx-font-weight: bold;
+}
+
 /* P1-06: dashboard screen (plan section 7.9). Append-only -- the .root token block above is
    pinned by ThemeResourceTest and must not be reordered or edited. */
 
@@ -154,13 +289,65 @@
    horizontal ScrollPane lets every button keep its full label instead of shrinking to fit
    (found 2026-09-18, the first time anyone actually looked at the running dashboard). */
 .toolbar-scroll {
-    -fx-background-color: transparent;
+    -fx-background-color: -argus-bg-panel;
     -fx-border-color: -argus-border;
     -fx-border-width: 0 0 1 0;
 }
 
-.toolbar-scroll > .viewport {
+.toolbar-scroll > .viewport,
+.toolbar-scroll .clipped-container {
+    -fx-background-color: -argus-bg-panel;
+}
+
+/* Part 1 of the UI redesign: the scrollable dashboard overview body (metric cards, charts,
+   recent scans, quick actions, live scan) -- the .toolbar-scroll pattern applied vertically so
+   a tall dashboard never overflows the window regardless of screen size. */
+.dashboard-scroll {
     -fx-background-color: transparent;
+}
+
+.dashboard-scroll > .viewport {
+    -fx-background-color: transparent;
+}
+
+/* Dashboard overview charts (PieChart/LineChart): styled via the built-in JavaFX chart
+   structural classes so they read as part of the dark theme instead of Modena's default
+   white plot area -- no custom styleClass needed on the chart elements themselves. */
+.chart-plot-background {
+    -fx-background-color: -argus-bg-panel-alt;
+}
+
+.chart-vertical-grid-lines,
+.chart-horizontal-grid-lines {
+    -fx-stroke: -argus-border;
+}
+
+.chart-legend {
+    -fx-background-color: transparent;
+}
+
+.chart-legend-item {
+    -fx-text-fill: -argus-text-secondary;
+}
+
+.axis {
+    -fx-tick-label-fill: -argus-text-muted;
+}
+
+.axis-label {
+    -fx-text-fill: -argus-text-secondary;
+}
+
+.default-color0.chart-series-line {
+    -fx-stroke: -argus-primary;
+}
+
+.default-color0.chart-line-symbol {
+    -fx-background-color: -argus-primary, -argus-bg-panel-alt;
+}
+
+.chart-pie-label {
+    -fx-fill: -argus-text-secondary;
 }
 
 .secondary-button {
@@ -763,6 +950,11 @@
 
 .findings-detail-root {
     -fx-background-color: -argus-bg-base;
+}
+
+.findings-list-pane {
+    -fx-background-color: -argus-bg-panel;
+    -fx-padding: 12;
 }
 
 .detail-pane {

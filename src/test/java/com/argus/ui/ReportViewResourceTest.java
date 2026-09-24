@@ -28,10 +28,10 @@ import org.w3c.dom.NodeList;
 class ReportViewResourceTest {
 
     private static final String CLASSPATH_LOCATION = "/com/argus/ui/report-view.fxml";
-    private static final String DASHBOARD_CLASSPATH_LOCATION = "/com/argus/ui/dashboard-view.fxml";
+    private static final String SIDEBAR_CLASSPATH_LOCATION = "/com/argus/ui/sidebar-nav.fxml";
 
     private static Document document;
-    private static Document dashboardDocument;
+    private static Document sidebarDocument;
 
     @BeforeAll
     static void parseReportView() throws Exception {
@@ -43,9 +43,9 @@ class ReportViewResourceTest {
             document = builder.parse(new ByteArrayInputStream(in.readAllBytes()));
         }
         try (InputStream in = ReportViewResourceTest.class
-                .getResourceAsStream(DASHBOARD_CLASSPATH_LOCATION)) {
-            assertNotNull(in, "dashboard-view.fxml not packaged at " + DASHBOARD_CLASSPATH_LOCATION);
-            dashboardDocument = builder.parse(new ByteArrayInputStream(in.readAllBytes()));
+                .getResourceAsStream(SIDEBAR_CLASSPATH_LOCATION)) {
+            assertNotNull(in, "sidebar-nav.fxml not packaged at " + SIDEBAR_CLASSPATH_LOCATION);
+            sidebarDocument = builder.parse(new ByteArrayInputStream(in.readAllBytes()));
         }
     }
 
@@ -171,12 +171,18 @@ class ReportViewResourceTest {
                 "report-view.fxml must not contain the word \"severity\" anywhere");
     }
 
+    /**
+     * P1 UI redesign: the dashboard's per-screen toolbar buttons were replaced by the shared
+     * sidebar ({@code sidebar-nav.fxml}), which now owns the single navigation entry point to
+     * every screen, including this one -- {@code DashboardController.setOpenReportHandler}
+     * still exists unchanged and forwards to the sidebar's own {@code reportItem}.
+     */
     @Test
-    void dashboardViewDeclaresAReportButtonWiredToOnOpenReport() {
-        Element button = findElementWithFxId(dashboardDocument.getDocumentElement(), "reportButton");
-        assertNotNull(button, "no element with fx:id=\"reportButton\" found in dashboard-view.fxml");
-        assertEquals("Button", button.getTagName());
-        assertEquals("#onOpenReport", button.getAttribute("onAction"));
+    void sidebarNavViewDeclaresAReportItemWiredToOnReport() {
+        Element item = findElementWithFxId(sidebarDocument.getDocumentElement(), "reportItem");
+        assertNotNull(item, "no element with fx:id=\"reportItem\" found in sidebar-nav.fxml");
+        assertEquals("HBox", item.getTagName());
+        assertEquals("#onReport", item.getAttribute("onMouseClicked"));
     }
 
     private String textContentLowercase() {

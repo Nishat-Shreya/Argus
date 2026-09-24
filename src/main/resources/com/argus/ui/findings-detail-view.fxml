@@ -42,13 +42,16 @@
         </VBox>
     </top>
     <center>
-        <SplitPane dividerPositions="0.45">
-            <VBox spacing="6">
+        <SplitPane fx:id="detailSplit" dividerPositions="0.45">
+            <VBox styleClass="findings-list-pane" spacing="6">
                 <HBox spacing="8" alignment="CENTER_LEFT">
                     <Label text="filter by tag" styleClass="card-subtitle"/>
                     <ComboBox fx:id="tagFilterCombo" styleClass="tag-filter" prefWidth="160"/>
                 </HBox>
                 <TableView fx:id="findingsTable" styleClass="findings-table" VBox.vgrow="ALWAYS">
+                    <columnResizePolicy>
+                        <TableView fx:constant="CONSTRAINED_RESIZE_POLICY"/>
+                    </columnResizePolicy>
                     <columns>
                         <TableColumn text="type" prefWidth="90"/>
                         <TableColumn text="subject" prefWidth="220"/>
