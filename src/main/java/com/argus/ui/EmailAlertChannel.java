@@ -4,6 +4,7 @@ import com.argus.core.EmailDeliveryException;
 import com.argus.core.EmailEndpoint;
 import com.argus.core.EmailSender;
 import com.argus.core.ScanAlert;
+import com.argus.core.ScanCompletionNotice;
 import java.lang.System.Logger.Level;
 import java.util.Objects;
 import java.util.Optional;
@@ -31,7 +32,7 @@ final class EmailAlertChannel implements AlertChannel {
     private final ExecutorService executor;
 
     /** @param endpoints resolved PER DELIVERY, on the worker thread. Empty means "not
-     *                    configured": {@link #deliver(ScanAlert)} is then a silent no-op. */
+     *                    configured": {@link #scanCompleted} is then a silent no-op. */
     EmailAlertChannel(Supplier<Optional<EmailEndpoint>> endpoints, EmailSender sender) {
         this.endpoints = Objects.requireNonNull(endpoints, "endpoints");
         this.sender = Objects.requireNonNull(sender, "sender");
@@ -43,26 +44,42 @@ final class EmailAlertChannel implements AlertChannel {
         this.executor = Executors.newSingleThreadExecutor(factory);
     }
 
-    /** FX thread: submits and returns. No I/O, no vault read, no blocking call. */
+    /**
+     * Deliberately a no-op: this channel emails from {@link #scanCompleted}, once per completed
+     * scan, whether or not it found anything new. The new-findings alert fan-out (webhook,
+     * desktop) still calls every channel's {@code deliver}, so acting on it here as well would
+     * email twice for a scan with new findings.
+     */
     @Override
     public void deliver(ScanAlert alert) {
         Objects.requireNonNull(alert, "alert");
+    }
+
+    /** FX thread: submits and returns. No I/O, no vault read, no blocking call. */
+    @Override
+    public void scanCompleted(ScanCompletionNotice notice) {
+        Objects.requireNonNull(notice, "notice");
         try {
-            executor.submit(() -> deliverOnWorkerThread(alert));
+            executor.submit(() -> deliverOnWorkerThread(notice));
         } catch (RejectedExecutionException e) {
             LOGGER.log(Level.WARNING, "email delivery skipped: channel is closed");
         }
     }
 
-    private void deliverOnWorkerThread(ScanAlert alert) {
+    private void deliverOnWorkerThread(ScanCompletionNotice notice) {
         try {
             Optional<EmailEndpoint> endpoint = endpoints.get();
             if (endpoint.isEmpty()) {
+                LOGGER.log(Level.INFO,
+                        "email alert skipped: email notifications are not configured");
                 return;
             }
-            sender.send(endpoint.get(), alert);
+            sender.send(endpoint.get(), notice);
+            // EmailEndpoint.toString() is host:port only -- never the username or password.
+            LOGGER.log(Level.INFO, "email alert accepted by " + endpoint.get());
         } catch (EmailDeliveryException e) {
-            LOGGER.log(Level.WARNING, "email delivery failed: replyCode=" + e.replyCode(), e);
+            LOGGER.log(Level.WARNING, "email delivery failed: " + e.getMessage()
+                    + " (replyCode=" + e.replyCode() + ")", e);
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
         } catch (RuntimeException e) {

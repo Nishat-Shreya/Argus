@@ -30,6 +30,21 @@ class EmailSenderTest {
     }
 
     @Test
+    void s1bScanCompletedNoticeIsComposedAndSentOnce() throws Exception {
+        FakeEmailTransport transport = new FakeEmailTransport();
+        EmailSender sender = new EmailSender(transport);
+        ScanCompletionNotice notice = new ScanCompletionNotice("example.com", 2L, 7,
+                java.util.OptionalLong.of(1L), java.util.Optional.empty());
+
+        sender.send(ENDPOINT, notice);
+
+        assertEquals(1, transport.callCount());
+        assertEquals(ENDPOINT, transport.requestedEndpoints().get(0));
+        assertEquals(EmailPayloads.subject(notice), transport.requestedSubjects().get(0));
+        assertEquals(EmailPayloads.body(notice), transport.requestedBodies().get(0));
+    }
+
+    @Test
     void s2TransportIoExceptionYieldsNoReplyCodeWithCausePreserved() {
         FakeEmailTransport transport = new FakeEmailTransport();
         IOException cause = new IOException("connection refused");
@@ -66,6 +81,8 @@ class EmailSenderTest {
     void s5RejectsNullArguments() {
         EmailSender sender = new EmailSender(new FakeEmailTransport());
         assertThrows(NullPointerException.class, () -> sender.send(null, ALERT));
-        assertThrows(NullPointerException.class, () -> sender.send(ENDPOINT, null));
+        assertThrows(NullPointerException.class, () -> sender.send(ENDPOINT, (ScanAlert) null));
+        assertThrows(NullPointerException.class,
+                () -> sender.send(ENDPOINT, (ScanCompletionNotice) null));
     }
 }

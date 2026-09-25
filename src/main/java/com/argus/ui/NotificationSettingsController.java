@@ -78,7 +78,6 @@ public final class NotificationSettingsController {
     public void refresh() {
         pendingRemove = false;
         pendingRemoveEmail = false;
-        urlField.clear();
         emailField.clear();
         clearMessage();
         updateStatusAndButtons();
@@ -285,11 +284,6 @@ public final class NotificationSettingsController {
     }
 
     private void updateStatusAndButtons() {
-        boolean configured = vault.keys().contains(WebhookSettings.VAULT_ENTRY);
-        statusLabel.setText(configured ? "configured" : "not configured");
-        saveButton.setDisable(busy);
-        removeButton.setDisable(busy || !configured);
-
         boolean emailConfigured = vault.keys().contains(EmailSettings.VAULT_ENTRY);
         emailStatusLabel.setText(emailConfigured ? "configured" : "not configured");
         emailSaveButton.setDisable(busy);

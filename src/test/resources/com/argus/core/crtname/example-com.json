@@ -1,0 +1,16 @@
+[
+  {"sub": "example.com"},
+  {"sub": "www.example.com"},
+  {"sub": "*.example.com"},
+  {"sub": "API.Example.COM"},
+  {"sub": "mail.example.com."},
+  {"sub": "dev.example.com"},
+  {"sub": "assets.example.com"},
+  {"sub": "legacy.example.com"},
+  {"sub": "cdn.othercorp.net"},
+  {"sub": "admin@example.com"},
+  {"sub": "notexample.com"},
+  {"sub": "example.com.evil.test"},
+  {"sub": "www.example.com"},
+  {"sub": "  api.example.com  "}
+]

@@ -30,9 +30,19 @@ class SubdomainEnumeratorTest {
             new Subdomain("www.example.com"));
 
     @Test
-    void buildsTheExpectedCrtShUri() {
-        assertEquals(URI.create("https://crt.sh/?q=%25.example.com&output=json"),
-                SubdomainEnumerator.crtShUri("example.com"));
+    void buildsTheExpectedCrtNameUri() {
+        assertEquals(URI.create("https://crt.name/v1/search?apex=example.com&format=json"),
+                SubdomainEnumerator.crtNameUri("example.com"));
+    }
+
+    @Test
+    void theRequestUriCarriesNothingButTheApexAndTheJsonFormat() {
+        URI uri = SubdomainEnumerator.crtNameUri("kuet.ac.bd");
+
+        assertEquals("https", uri.getScheme());
+        assertEquals("crt.name", uri.getHost());
+        assertEquals("/v1/search", uri.getPath());
+        assertEquals("apex=kuet.ac.bd&format=json", uri.getRawQuery());
     }
 
     @Test
@@ -43,7 +53,7 @@ class SubdomainEnumeratorTest {
 
         enumerator.enumerate("  Example.COM. ");
 
-        assertEquals(URI.create("https://crt.sh/?q=%25.example.com&output=json"),
+        assertEquals(URI.create("https://crt.name/v1/search?apex=example.com&format=json"),
                 fake.requestedUris().get(0));
     }
 
@@ -121,6 +131,83 @@ class SubdomainEnumeratorTest {
     }
 
     @Test
+    void anInvalidApexErrorSurfacesCrtNamesOwnExplanation() {
+        FakeHttpFetcher fake = new FakeHttpFetcher();
+        fake.willReturn(new HttpFetchResult(400,
+                "invalid apex: not an apex (eTLD+1 is kuet.ac.bd)\n"));
+        SubdomainEnumerator enumerator = new SubdomainEnumerator(fake);
+
+        SubdomainEnumerationException e = assertThrows(SubdomainEnumerationException.class,
+                () -> enumerator.enumerate("mail.kuet.ac.bd"));
+
+        assertEquals(400, e.statusCode());
+        assertEquals("crt.name returned HTTP 400: invalid apex: not an apex (eTLD+1 is "
+                + "kuet.ac.bd)", e.getMessage());
+    }
+
+    @Test
+    void aRateLimitResponseNamesTheFreeTierQuota() {
+        FakeHttpFetcher fake = new FakeHttpFetcher();
+        fake.willReturn(new HttpFetchResult(429, "rate limit exceeded\n"));
+        SubdomainEnumerator enumerator = new SubdomainEnumerator(fake);
+
+        SubdomainEnumerationException e = assertThrows(SubdomainEnumerationException.class,
+                () -> enumerator.enumerate("example.com"));
+
+        assertEquals(429, e.statusCode());
+        assertTrue(e.getMessage().contains("HTTP 429"));
+        assertTrue(e.getMessage().contains("rate limit exceeded"));
+        assertTrue(e.getMessage().contains("100 requests per IP per day"));
+    }
+
+    @Test
+    void anHtmlErrorPageIsNotEchoedIntoTheMessageButTheStatusIs() throws Exception {
+        FakeHttpFetcher fake = new FakeHttpFetcher();
+        fake.willReturn(new HttpFetchResult(502, Fixtures.read("bad-gateway.html")));
+        SubdomainEnumerator enumerator = new SubdomainEnumerator(fake);
+
+        SubdomainEnumerationException e = assertThrows(SubdomainEnumerationException.class,
+                () -> enumerator.enumerate("example.com"));
+
+        assertEquals("crt.name returned HTTP 502", e.getMessage());
+    }
+
+    @Test
+    void aLongErrorBodyIsTruncatedAndFlattenedToOneLine() {
+        FakeHttpFetcher fake = new FakeHttpFetcher();
+        fake.willReturn(new HttpFetchResult(500, "boom\n" + "x".repeat(1_000)));
+        SubdomainEnumerator enumerator = new SubdomainEnumerator(fake);
+
+        SubdomainEnumerationException e = assertThrows(SubdomainEnumerationException.class,
+                () -> enumerator.enumerate("example.com"));
+
+        assertFalse(e.getMessage().contains("\n"));
+        assertTrue(e.getMessage().length() < 300, "message was " + e.getMessage().length());
+        assertTrue(e.getMessage().startsWith("crt.name returned HTTP 500: boom x"));
+    }
+
+    /**
+     * No silent fallback: when crt.name fails, exactly one request was made, to crt.name and to
+     * nothing else, and the error says crt.name -- never another source.
+     */
+    @Test
+    void neverFallsBackToAnotherSourceWhenCrtNameFails() {
+        for (int status : List.of(400, 429, 500, 502, 503)) {
+            FakeHttpFetcher fake = new FakeHttpFetcher();
+            fake.willReturn(new HttpFetchResult(status, "down"));
+            SubdomainEnumerator enumerator = new SubdomainEnumerator(fake);
+
+            SubdomainEnumerationException e = assertThrows(SubdomainEnumerationException.class,
+                    () -> enumerator.enumerate("example.com"));
+
+            assertEquals(1, fake.callCount(), "status " + status);
+            assertEquals("crt.name", fake.requestedUris().get(0).getHost());
+            assertTrue(e.getMessage().startsWith("crt.name "), e.getMessage());
+            assertFalse(e.getMessage().contains("crt.sh"));
+        }
+    }
+
+    @Test
     void htmlBodyWithSuccessStatusThrows() throws Exception {
         FakeHttpFetcher fake = new FakeHttpFetcher();
         fake.willReturn(new HttpFetchResult(200, Fixtures.read("bad-gateway.html")));
@@ -141,6 +228,7 @@ class SubdomainEnumeratorTest {
         SubdomainEnumerationException e = assertThrows(SubdomainEnumerationException.class,
                 () -> enumerator.enumerate("example.com"));
         assertSame(connectException, e.getCause());
+        assertEquals("crt.name request failed for example.com", e.getMessage());
     }
 
     @Test

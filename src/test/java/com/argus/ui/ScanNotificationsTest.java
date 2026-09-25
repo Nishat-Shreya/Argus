@@ -9,6 +9,7 @@ import com.argus.core.FindingDelta;
 import com.argus.core.FindingSnapshot;
 import com.argus.core.ScanAlert;
 import com.argus.core.ScanCompletion;
+import com.argus.core.ScanCompletionNotice;
 import com.argus.core.ScanComparison;
 import com.argus.core.ScanDiffReport;
 import com.argus.core.ScanRun;
@@ -326,6 +327,75 @@ class ScanNotificationsTest {
     private static ScanOutcome outcome(ScanCompletion completion, Long savedScanId) {
         ScanRun run = new ScanRun("example.com", STARTED, FINISHED, completion, List.of());
         return new ScanOutcome(run, 0, savedScanId);
+    }
+
+    // ---- completionNotice(): the every-successful-scan email --------------------------
+
+    @Test
+    void n28ACompletedSavedScanWithNoBaselineStillProducesANotice() {
+        ScanCompletionNotice notice = ScanNotifications.completionNotice(
+                outcome(ScanCompletion.COMPLETED, 7L), Optional.empty(), Optional.empty());
+
+        assertEquals("example.com", notice.target());
+        assertEquals(7L, notice.scanId());
+        assertTrue(notice.baselineScanId().isEmpty());
+        assertEquals(0, notice.newFindingCount());
+    }
+
+    @Test
+    void n29ACompletedScanWithNothingNewStillProducesANoticeNamingTheBaseline() {
+        ScanCompletionNotice notice = ScanNotifications.completionNotice(
+                outcome(ScanCompletion.COMPLETED, 7L), Optional.of(4L), Optional.empty());
+
+        assertEquals(4L, notice.baselineScanId().getAsLong());
+        assertEquals(0, notice.newFindingCount());
+    }
+
+    @Test
+    void n30NewFindingsAreCarriedOnTheNotice() {
+        ScanAlert alert = new ScanAlert("example.com", 4L, 7L, 2, List.of("a", "b"));
+
+        ScanCompletionNotice notice = ScanNotifications.completionNotice(
+                outcome(ScanCompletion.COMPLETED, 7L), Optional.of(4L), Optional.of(alert));
+
+        assertEquals(2, notice.newFindingCount());
+    }
+
+    @Test
+    void n31OnlyCompletedSavedScansMayProduceANoticeSoFailedScansNeverEmail() {
+        for (ScanCompletion completion : List.of(ScanCompletion.COMPLETED_WITH_ERRORS,
+                ScanCompletion.CANCELLED)) {
+            assertThrows(IllegalArgumentException.class, () -> ScanNotifications.completionNotice(
+                    outcome(completion, 7L), Optional.empty(), Optional.empty()));
+        }
+        assertThrows(IllegalArgumentException.class, () -> ScanNotifications.completionNotice(
+                outcome(ScanCompletion.COMPLETED, null), Optional.empty(), Optional.empty()));
+    }
+
+    // ---- noAlertReason(): why no alert (and so no email) was produced -----
+
+    @Test
+    void n25NoBaselineIsReportedAsFirstScanOfTheTarget() {
+        String reason = ScanNotifications.noAlertReason("kuet.ac.bd", Optional.empty());
+
+        assertTrue(reason.contains("kuet.ac.bd"));
+        assertTrue(reason.contains("no earlier completed scan"));
+    }
+
+    @Test
+    void n26BaselineWithNothingAddedNamesTheBaselineScan() {
+        String reason = ScanNotifications.noAlertReason("kuet.ac.bd", Optional.of(54L));
+
+        assertTrue(reason.contains("no new findings"));
+        assertTrue(reason.contains("#54"));
+    }
+
+    @Test
+    void n27NoAlertReasonRejectsNulls() {
+        assertThrows(NullPointerException.class,
+                () -> ScanNotifications.noAlertReason(null, Optional.empty()));
+        assertThrows(NullPointerException.class,
+                () -> ScanNotifications.noAlertReason("kuet.ac.bd", null));
     }
 
     private static ScanSummary summary(long id, String target, String status) {

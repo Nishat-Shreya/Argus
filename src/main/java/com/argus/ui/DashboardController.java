@@ -860,45 +860,75 @@ public final class DashboardController {
         return DroppedContent.none();
     }
 
+    /** The background comparison's verdict: the baseline scan (when there is one) and the
+     *  new-findings alert (when the comparison found something new). */
+    private record AlertDecision(Optional<Long> baseline, Optional<ScanAlert> alert) {
+    }
+
     /**
      * P3-02 §4.1: gate 1 is checked here, instantly, on the FX thread. Everything past that —
      * the blocking {@code ScanHistory} read and the diff — runs on a dedicated daemon thread, so
      * a scan finishing never blocks the FX thread on the database. {@code ScanCoordinator} is
      * untouched: this reads already-persisted history one step after the coordinator's own
      * final event, not a new hook into its supervisor loop.
+     *
+     * Two things can leave here, both only for a scan that passed the gate (saved and
+     * {@code COMPLETED}, so a failed, errored or cancelled scan sends nothing at all): the
+     * new-findings alert to {@code channels.deliver} (webhook, desktop -- unchanged, still only
+     * when something is new), and ONE scan-completed notice to {@code channels.scanCompleted}
+     * (email) for every such scan. The task's succeeded and failed handlers are mutually
+     * exclusive, so the notice goes out exactly once per scan.
      */
     private void maybeNotify(ScanOutcome outcome) {
         if (!ScanNotifications.eligible(outcome)) {
+            appendLog("notification · nothing sent: only scans that completed without errors "
+                    + "and were saved send notifications");
             return;
         }
         String target = outcome.run().target();
         long savedScanId = outcome.savedScanId();
 
-        Task<Optional<ScanAlert>> task = new Task<>() {
+        Task<AlertDecision> task = new Task<>() {
             @Override
-            protected Optional<ScanAlert> call() throws ScanArchiveException {
+            protected AlertDecision call() throws ScanArchiveException {
                 List<ScanSummary> all = history.listScans();
                 Optional<Long> baseline =
                         ScanNotifications.baselineScanId(all, target, savedScanId);
                 if (baseline.isEmpty()) {
-                    return Optional.empty();
+                    return new AlertDecision(baseline, Optional.empty());
                 }
                 ScanComparison comparison = history.compare(baseline.get(), savedScanId);
-                return ScanNotifications.alertFor(comparison);
+                return new AlertDecision(baseline, ScanNotifications.alertFor(comparison));
             }
         };
 
-        task.setOnSucceeded(event -> task.getValue().ifPresent(alert -> {
-            channels.deliver(alert);
-            appendLog("notification · " + ScanNotifications.desktopNotification(alert).caption());
-        }));
+        task.setOnSucceeded(event -> {
+            AlertDecision decision = task.getValue();
+            decision.alert().ifPresentOrElse(alert -> {
+                channels.deliver(alert);
+                appendLog("notification · "
+                        + ScanNotifications.desktopNotification(alert).caption());
+            }, () -> appendLog("notification · no new-findings alert (webhook/desktop): "
+                    + ScanNotifications.noAlertReason(target, decision.baseline())));
+            sendCompletionNotice(outcome, decision.baseline(), decision.alert());
+        });
 
-        task.setOnFailed(event -> appendLog(
-                "notification check skipped · " + task.getException().getMessage()));
+        task.setOnFailed(event -> {
+            appendLog("notification check skipped · " + task.getException().getMessage());
+            sendCompletionNotice(outcome, Optional.empty(), Optional.empty());
+        });
 
         Thread thread = new Thread(task, "argus-scan-history");
         thread.setDaemon(true);
         thread.start();
+    }
+
+    /** The single place the scan-completed notice is sent. */
+    private void sendCompletionNotice(ScanOutcome outcome, Optional<Long> baseline,
+            Optional<ScanAlert> newFindings) {
+        channels.scanCompleted(
+                ScanNotifications.completionNotice(outcome, baseline, newFindings));
+        appendLog("notification · scan-completed notice sent (email, if configured)");
     }
 
     /**

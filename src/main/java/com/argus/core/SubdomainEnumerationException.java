@@ -1,6 +1,6 @@
 package com.argus.core;
 
-/** Every failure mode of a crt.sh query, with the cause preserved. */
+/** Every failure mode of a crt.name query, with the cause preserved. */
 public class SubdomainEnumerationException extends Exception {
 
     private final int statusCode;

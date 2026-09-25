@@ -1,6 +1,7 @@
 package com.argus.ui;
 
 import com.argus.core.ScanAlert;
+import com.argus.core.ScanCompletionNotice;
 import java.lang.System.Logger.Level;
 import java.util.List;
 import java.util.Objects;
@@ -58,6 +59,18 @@ final class AlertChannels {
                 } catch (RuntimeException e) {
                     LOGGER.log(Level.WARNING, "alert channel threw during deliver(); "
                             + "the remaining channels still receive the alert", e);
+                }
+            }
+        }
+
+        @Override
+        public void scanCompleted(ScanCompletionNotice notice) {
+            for (AlertChannel channel : channels) {
+                try {
+                    channel.scanCompleted(notice);
+                } catch (RuntimeException e) {
+                    LOGGER.log(Level.WARNING, "alert channel threw during scanCompleted(); "
+                            + "the remaining channels still receive the notice", e);
                 }
             }
         }
