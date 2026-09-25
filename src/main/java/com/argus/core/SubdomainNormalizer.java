@@ -5,13 +5,13 @@ import java.util.List;
 import java.util.Locale;
 import java.util.TreeSet;
 
-/** Turns raw crt.sh name tokens into the canonical, scoped, deduplicated result set. */
+/** Turns raw crt.name name tokens into the canonical, scoped, deduplicated result set. */
 final class SubdomainNormalizer {
 
     private SubdomainNormalizer() {}
 
     /**
-     * @param rawNames tokens from CrtShResponseParser, any case, any whitespace, possibly
+     * @param rawNames tokens from CrtNameResponseParser, any case, any whitespace, possibly
      *                 wildcarded, possibly out of scope, possibly not hostnames at all
      * @param domain   an already-normalized domain (see DomainName.normalize)
      * @return unmodifiable, ascending by name, duplicate-free

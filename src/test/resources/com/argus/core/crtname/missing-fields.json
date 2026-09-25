@@ -1,0 +1,10 @@
+[
+  {"first_seen": "2010-02-08T22:51:49Z"},
+  {"sub": null},
+  {"sub": 12345},
+  {"sub": ["nested.example.com"]},
+  {"sub": "with-date.example.com", "first_seen": "2017-02-20T11:17:32Z"},
+  {"sub": "extra-field.example.com", "unknown_future_field": "surprise"},
+  "not an object",
+  null
+]

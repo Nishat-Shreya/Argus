@@ -5,14 +5,14 @@ import java.io.InputStream;
 import java.io.UncheckedIOException;
 import java.nio.charset.StandardCharsets;
 
-/** Loads crt.sh test fixtures from the classpath. No filesystem paths (P1-01 R5 precedent). */
+/** Loads crt.name test fixtures from the classpath. No filesystem paths (P1-01 R5 precedent). */
 final class Fixtures {
 
     private Fixtures() {}
 
-    /** Reads {@code /com/argus/core/crtsh/<name>} as UTF-8; fails loudly if absent. */
+    /** Reads {@code /com/argus/core/crtname/<name>} as UTF-8; fails loudly if absent. */
     static String read(String name) {
-        return read("crtsh", name);
+        return read("crtname", name);
     }
 
     /** Reads {@code /com/argus/core/<source>/<name>} as UTF-8; fails loudly if absent. */

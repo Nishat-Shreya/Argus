@@ -9,7 +9,7 @@ import java.util.List;
 import org.junit.jupiter.api.Test;
 
 /**
- * {@link SubdomainNormalizer} turns raw crt.sh name tokens into the canonical, scoped,
+ * {@link SubdomainNormalizer} turns raw crt.name name tokens into the canonical, scoped,
  * deduplicated result set — DNS-name concerns only, zero Jackson, zero HTTP (plan §3.4).
  */
 class SubdomainNormalizerTest {
@@ -95,7 +95,7 @@ class SubdomainNormalizerTest {
 
     @Test
     void normalizesTheWholeFixtureToTheExpectedSet() throws Exception {
-        List<String> rawTokens = CrtShResponseParser.parse(Fixtures.read("example-com.json"));
+        List<String> rawTokens = CrtNameResponseParser.parse(Fixtures.read("example-com.json"));
         List<Subdomain> result = SubdomainNormalizer.normalize(rawTokens, "example.com");
 
         List<Subdomain> expected = List.of(
