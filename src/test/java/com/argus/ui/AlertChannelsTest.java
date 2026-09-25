@@ -5,8 +5,11 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import com.argus.core.ScanAlert;
+import com.argus.core.ScanCompletionNotice;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
+import java.util.OptionalLong;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.jupiter.api.Test;
 
@@ -120,6 +123,84 @@ class AlertChannelsTest {
         AlertChannel composite = AlertChannels.of(List.of());
         assertDoesNotThrow(() -> composite.deliver(ALERT));
         assertDoesNotThrow(composite::close);
+    }
+
+    // ---- scanCompleted: the every-successful-scan path (email only) ---------------------
+
+    private static final ScanCompletionNotice NOTICE = new ScanCompletionNotice("example.com", 3L,
+            5, OptionalLong.of(2L), Optional.empty());
+
+    @Test
+    void c7ScanCompletedReachesEveryChannelOnceEach() {
+        List<String> completed = new ArrayList<>();
+        AlertChannel first = completing("first", completed);
+        AlertChannel second = completing("second", completed);
+
+        AlertChannels.of(List.of(first, second)).scanCompleted(NOTICE);
+
+        assertEquals(List.of("first", "second"), completed);
+    }
+
+    @Test
+    void c8ScanCompletedIsolationOneChannelThrowingDoesNotStopTheOthers() {
+        List<String> completed = new ArrayList<>();
+        AlertChannel throwing = new AlertChannel() {
+            @Override
+            public void deliver(ScanAlert alert) {
+            }
+
+            @Override
+            public void scanCompleted(ScanCompletionNotice notice) {
+                throw new RuntimeException("boom");
+            }
+
+            @Override
+            public void close() {
+            }
+        };
+
+        AlertChannel composite = AlertChannels.of(List.of(throwing, completing("second", completed)));
+        assertDoesNotThrow(() -> composite.scanCompleted(NOTICE));
+
+        assertEquals(List.of("second"), completed);
+    }
+
+    /** Webhook and desktop implement only {@code deliver}, so they must be untouched by the
+     *  new path -- they still fire only on new findings. */
+    @Test
+    void c9ChannelsThatOnlyImplementDeliverIgnoreScanCompletedAndKeepTheirAlertBehaviour() {
+        List<String> alerts = new ArrayList<>();
+        AlertChannel alertOnly = recording("alertOnly", alerts);
+
+        AlertChannel composite = AlertChannels.of(List.of(alertOnly));
+        composite.scanCompleted(NOTICE);
+        assertEquals(List.of(), alerts, "scanCompleted must not reach deliver(ScanAlert)");
+
+        composite.deliver(ALERT);
+        assertEquals(List.of("alertOnly"), alerts);
+    }
+
+    @Test
+    void c10NoneIsASilentNoOpForScanCompletedToo() {
+        assertDoesNotThrow(() -> AlertChannels.none().scanCompleted(NOTICE));
+        assertDoesNotThrow(() -> AlertChannels.of(List.of()).scanCompleted(NOTICE));
+    }
+
+    private static AlertChannel completing(String name, List<String> completed) {
+        return new AlertChannel() {
+            @Override
+            public void deliver(ScanAlert alert) {
+            }
+
+            @Override
+            public void scanCompleted(ScanCompletionNotice notice) {
+                completed.add(name);
+            }
+
+            @Override
+            public void close() {
+            }
+        };
     }
 
     private static AlertChannel recording(String name, List<String> order) {

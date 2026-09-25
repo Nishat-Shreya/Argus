@@ -148,6 +148,43 @@ class NotificationWiringTest {
                 "only WebhookSettings.java may contain the literal vault entry name");
     }
 
+    /**
+     * Email goes out after EVERY successful scan, exactly once, and never for a failed one:
+     * {@code maybeNotify} has a single call site, the eligibility gate (saved + COMPLETED) comes
+     * before anything is sent, and the scan-completed notice has a single send point that is
+     * reached from exactly two places -- the background task's succeeded and failed handlers,
+     * which are mutually exclusive. The new-findings {@code deliver(alert)} path (webhook,
+     * desktop) is still there, unchanged.
+     */
+    @Test
+    void w7EmailIsSentOncePerSuccessfulScanAndTheAlertPathIsUnchanged() throws IOException {
+        String source =
+                readSource(Path.of("src/main/java/com/argus/ui/DashboardController.java"));
+
+        assertEquals(1, occurrences(source, "maybeNotify(outcome);"),
+                "maybeNotify must be called exactly once per finished scan");
+        assertEquals(1, occurrences(source, "channels.scanCompleted("),
+                "the notice has one send point");
+        assertEquals(2, occurrences(source, "sendCompletionNotice(outcome,"),
+                "reached from the succeeded handler and the failed handler only");
+        assertEquals(1, occurrences(source, "channels.deliver(alert);"),
+                "the new-findings alert path (webhook/desktop) stays a single call");
+
+        int gate = source.indexOf("ScanNotifications.eligible(outcome)");
+        int firstNotice = source.indexOf("channels.scanCompleted(");
+        assertTrue(gate >= 0 && gate < firstNotice,
+                "the eligibility gate must run before any notice is sent");
+    }
+
+    private static int occurrences(String haystack, String needle) {
+        int count = 0;
+        for (int index = haystack.indexOf(needle); index >= 0;
+                index = haystack.indexOf(needle, index + needle.length())) {
+            count++;
+        }
+        return count;
+    }
+
     private static Field findFieldOfType(Class<?> owner, Class<?> fieldType) {
         for (Field field : owner.getDeclaredFields()) {
             if (field.getType() == fieldType) {

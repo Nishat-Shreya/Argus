@@ -31,8 +31,22 @@ public final class EmailSender {
         Objects.requireNonNull(endpoint, "endpoint must not be null");
         Objects.requireNonNull(alert, "alert must not be null");
 
+        deliver(endpoint, EmailPayloads.subject(alert), EmailPayloads.body(alert));
+    }
+
+    /** The every-successful-scan email: same transport, same error handling, different text. */
+    public void send(EmailEndpoint endpoint, ScanCompletionNotice notice)
+            throws EmailDeliveryException, InterruptedException {
+        Objects.requireNonNull(endpoint, "endpoint must not be null");
+        Objects.requireNonNull(notice, "notice must not be null");
+
+        deliver(endpoint, EmailPayloads.subject(notice), EmailPayloads.body(notice));
+    }
+
+    private void deliver(EmailEndpoint endpoint, String subject, String body)
+            throws EmailDeliveryException, InterruptedException {
         try {
-            transport.send(endpoint, EmailPayloads.subject(alert), EmailPayloads.body(alert));
+            transport.send(endpoint, subject, body);
         } catch (EmailDeliveryException e) {
             // Already carries the real SMTP reply code (JdkSmtpTransport's own expect() check)
             // -- rethrown as-is rather than re-wrapped, so that code is not lost.

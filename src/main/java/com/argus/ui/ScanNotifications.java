@@ -3,12 +3,14 @@ package com.argus.ui;
 import com.argus.core.FindingSnapshot;
 import com.argus.core.ScanAlert;
 import com.argus.core.ScanCompletion;
+import com.argus.core.ScanCompletionNotice;
 import com.argus.core.ScanComparison;
 import com.argus.core.ScanSummary;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.OptionalLong;
 
 /**
  * Every rule for whether to notify a completed scan and what it says (plan §3.5). Pure, no
@@ -87,6 +89,41 @@ final class ScanNotifications {
 
     /** The desktop projection of an alert — byte-identical text to P3-02's original
      *  {@code forComparison}. */
+    /**
+     * The every-successful-scan email's content. Only a scan that {@link #eligible} (saved and
+     * {@code COMPLETED}) may produce one -- a failed, errored or cancelled scan never emails --
+     * so anything else is a caller bug and throws. Pure.
+     *
+     * @param baselineScanId the earlier completed scan of this target, when one exists
+     * @param newFindings    the new-findings alert, when the comparison found something new
+     */
+    static ScanCompletionNotice completionNotice(ScanOutcome outcome,
+            Optional<Long> baselineScanId, Optional<ScanAlert> newFindings) {
+        Objects.requireNonNull(outcome, "outcome");
+        Objects.requireNonNull(baselineScanId, "baselineScanId");
+        Objects.requireNonNull(newFindings, "newFindings");
+        if (!eligible(outcome)) {
+            throw new IllegalArgumentException(
+                    "only a saved scan that completed without errors may produce a notice");
+        }
+        OptionalLong baseline = baselineScanId.isPresent()
+                ? OptionalLong.of(baselineScanId.get()) : OptionalLong.empty();
+        return new ScanCompletionNotice(outcome.run().target(), outcome.savedScanId(),
+                outcome.findingsDelivered(), baseline, newFindings);
+    }
+
+    /** Why a completed scan produced no alert (and therefore no email/webhook/desktop message) --
+     *  shown in the dashboard log so a silent "nothing sent" is never a mystery. Pure. */
+    static String noAlertReason(String target, Optional<Long> baselineScanId) {
+        Objects.requireNonNull(target, "target");
+        Objects.requireNonNull(baselineScanId, "baselineScanId");
+        if (baselineScanId.isEmpty()) {
+            return "no earlier completed scan of " + target
+                    + " to compare against (first scan of this target)";
+        }
+        return "no new findings compared with scan #" + baselineScanId.get();
+    }
+
     static DesktopNotification desktopNotification(ScanAlert alert) {
         Objects.requireNonNull(alert, "alert");
         int count = alert.addedCount();
