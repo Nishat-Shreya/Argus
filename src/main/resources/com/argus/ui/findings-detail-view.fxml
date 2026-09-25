@@ -38,7 +38,7 @@
                    wrapText="true"/>
             <Label fx:id="hiddenLabel" styleClass="form-hint" wrapText="true"/>
             <Label fx:id="unsourceableLabel" styleClass="form-hint" wrapText="true"
-                   text="threat-intel and KEV results are not persisted with a scan yet — this panel shows what the scan recorded."/>
+                   text="threat-intel and KEV results are saved with each scan but are not shown here — this panel shows what the scan recorded."/>
         </VBox>
     </top>
     <center>

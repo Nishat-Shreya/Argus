@@ -18,7 +18,6 @@ Full functional spec: [spec.md](spec.md).
 - Jackson for JSON
 - `java.net.http.HttpClient` for API calls
 - JUnit 5 for tests
-- GitHub Actions for CI
 
 ## Build & test
 
@@ -68,14 +67,13 @@ which scans sources for forbidden imports (including static imports).
 | Class | Responsibility | Key mechanics |
 |---|---|---|
 | `PortScanner` | Multithreaded TCP port scan of a host | `ExecutorService` via `newFixedThreadPool()`; each port is a `Callable<PortResult>`; results gathered via `Future`; graceful `shutdown()` / `awaitTermination()` / `shutdownNow()` |
-| `SubdomainEnumerator` | Discover subdomains for a domain | Queries crt.sh (Certificate Transparency), no API key; parses JSON with Jackson |
+| `SubdomainEnumerator` | Discover subdomains for a domain | Queries crt.name (Certificate Transparency search), no API key; parses JSON with Jackson |
 | `IntelSource` (interface) | Strategy for one threat-intel provider | `IntelResult query(target)` — normalized output |
 | `VirusTotalSource`, `ShodanSource`, `AbuseIpdbSource`, `CensysSource` | `IntelSource` impls | `java.net.http.HttpClient`; API key pulled from the encrypted vault, never logged |
 | `ThreatIntelClient` | Fans a target out across configured `IntelSource`s | Aggregates `IntelResult`s |
 | `KevScorer` | Match findings against the CISA KEV catalog; compute attack-priority score | Public KEV JSON feed, no key |
 | `ScanDiffEngine` | Compare two scans → added / removed / changed sets | Pure function over two result sets |
 | `ScanPipeline` (producer–consumer) | Stream live results from scan workers to the UI | Scan threads (producers) push onto a **shared `synchronized` queue**; consumer drains via a guarded `while` loop using `wait()` / `notify()` / `notifyAll()`. UI adapter calls `Platform.runLater()` — but that call lives in `ui`, not here. |
-| `AiInsightService` (stretch) | LLM wrapper: summary, risk explanation, NL→SQL | Optional; behind an interface |
 
 ### Concurrency contract
 
@@ -127,5 +125,5 @@ detail, Charts, Network graph, Report export preview.
 
 - Operator login (operator ID + master password) unlocks an **AES-encrypted local vault**.
 - API keys entered once in the UI, stored only in the vault. Never hardcoded, never on disk
-  in plaintext, never logged. This extends to CI — no secrets in the workflow; threat-intel
-  clients are tested with recorded JSON fixtures and a stubbed HTTP layer.
+  in plaintext, never logged. Threat-intel clients are tested with recorded JSON fixtures and a stubbed
+  HTTP layer, so no credentials are needed to run the tests.

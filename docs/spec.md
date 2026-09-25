@@ -20,7 +20,6 @@ authorized use only (own infrastructure, or explicit written permission).
 - `java.net.http.HttpClient` for API calls
 - Maven build
 - JUnit 5 for tests
-- GitHub Actions for CI
 
 ## Architecture — three packages, one-directional dependency
 
@@ -32,7 +31,7 @@ ui  →  core  →  db
   unit-testable and could back a future CLI.
   - `PortScanner` — multithreaded port scanning using `ExecutorService` /
     `newFixedThreadPool()`, tasks as `Callable<PortResult>`, results collected via `Future`.
-  - `SubdomainEnumerator` — queries crt.sh (Certificate Transparency logs), no API key needed.
+  - `SubdomainEnumerator` — queries crt.name (Certificate Transparency search), no API key needed.
   - `ThreatIntelClient` — a common `IntelSource` interface (Strategy pattern) with
     implementations for VirusTotal, Shodan, AbuseIPDB, Censys. Each returns a normalized
     `IntelResult`.
@@ -50,8 +49,6 @@ ui  →  core  →  db
     methods/blocks (same lock object for all accessors) or a concurrent collection, and avoid
     classic bugs like relying on `volatile` alone for compound operations (check-then-act,
     increment counters).
-  - `AiInsightService` (optional/stretch) — wraps an LLM API (OpenAI/Anthropic) for finding
-    summarization, risk explanation in plain language, and natural-language-to-SQL query.
 
 - **`com.argus.db`** — SQLite persistence.
   - `ScanRepository` — save/load scan sessions.
@@ -66,7 +63,7 @@ ui  →  core  →  db
 ## Core features (must-have)
 
 1. Multithreaded port scanning
-2. Subdomain enumeration via crt.sh
+2. Subdomain enumeration via crt.name
 3. Threat-intel enrichment via VirusTotal, Shodan, AbuseIPDB, Censys
 4. CISA KEV matching + attack-priority scoring
 5. SQLite persistence + scan diffing between runs
@@ -77,7 +74,7 @@ ui  →  core  →  db
 
 | API | Purpose | Auth |
 |---|---|---|
-| crt.sh | Subdomain enumeration | none |
+| crt.name | Subdomain enumeration | none |
 | VirusTotal | Domain/IP reputation | API key (free tier: 1,000 req/day) |
 | Shodan | Exposed services / banners | API key (free tier: 100 results/month) |
 | AbuseIPDB | IP abuse/reputation | API key (free tier: 1,000 req/day) |
@@ -99,7 +96,7 @@ logged in plaintext.
 - Interactive network graph (subdomain/host/port relationships)
 - Charts: port distribution, severity breakdown
 - Desktop notification on new critical/KEV finding
-- Email/webhook trigger for high-severity findings
+- Email notification after each completed scan
 - Export findings as PDF/HTML report, with a preview before export
 - Drag-and-drop target queue for scanning multiple domains
 
@@ -108,16 +105,6 @@ logged in plaintext.
 - Annotations/notes on individual findings (e.g. "false positive", "already patched")
 - Custom tags on findings
 - Scheduled/cron-like recurring scans, configurable from the UI
-
-## AI integration (stretch goal)
-
-- Plain-English executive summary generated after each scan
-- Click a finding to get an AI explanation of the CVE/risk in simple terms
-- Natural-language query box that translates to SQL against the local SQLite data
-  (e.g. "show me all critical findings from last week")
-- Remediation suggestion generator for critical findings
-- Simple anomaly flagging in scan diffs (e.g. a newly-appeared subdomain that looks like
-  typosquatting)
 
 ## Visual theme — animated dark "terminal" style
 
@@ -175,14 +162,14 @@ screen:
 ## Suggested build order (phased)
 
 1. **Phase 1 — core scan experience**: package skeleton, `PortScanner` with Executor/Future,
-   `SubdomainEnumerator` (crt.sh), SQLite schema + `ScanRepository`/`FindingDao`, login +
+   `SubdomainEnumerator` (crt.name), SQLite schema + `ScanRepository`/`FindingDao`, login +
    encrypted vault, basic dashboard (progress bar, log console, findings table) in the dark
    theme.
 2. **Phase 2 — enrichment & diffing**: VirusTotal/Shodan/AbuseIPDB/Censys clients via
    `IntelSource`, CISA KEV matching + priority scoring, `ScanDiffEngine` + diff view, charts,
    network graph.
-3. **Phase 3 — polish & extras**: timeline slider, notifications/webhooks, PDF/HTML export,
-   drag-and-drop target queue, annotations/tags, scheduled scans, AI integration.
+3. **Phase 3 — polish & extras**: timeline slider, notifications, PDF/HTML export,
+   drag-and-drop target queue, annotations/tags, scheduled scans.
 
 ## Non-functional requirements
 
